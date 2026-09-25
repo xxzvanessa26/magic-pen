@@ -1,0 +1,2259 @@
+<title>Magic Pen</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Atkinson+Hyperlegible:wght@400;700&family=Caveat:wght@500;600;700&family=Baloo+2:wght@800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* neutrals — for text/UI on paper (light) surfaces */
+    --ink:#241C30;
+    --ink-soft:#5C5369;
+    --ink-faint:#948C9E;
+
+    /* cream family — for text/UI on the dark cloth ground */
+    --cream:#F7EFDC;
+    --cream-soft:rgba(247,239,220,.76);
+    --cream-faint:rgba(247,239,220,.42);
+
+    /* cloth — the app's chrome ground, like library bookcloth */
+    --cloth:#1F4A40;
+    --cloth-deep:#153630;
+    --cloth-light:#2C6156;
+    --cloth-line:rgba(247,239,220,.14);
+
+    /* gold — the one confident accent, like foil-stamped lettering */
+    --gold:#E2A93E;
+    --gold-deep:#BD8226;
+    --gold-soft:#F0C876;
+    --gold-tint:rgba(226,169,62,.16);
+
+    /* paper — the actual page / book surfaces */
+    --paper:#FBF4E6;
+    --paper-white:#FFFDF8;
+    --line:#E6D9BF;
+    --line-soft:#EFE4CC;
+
+    /* danger — delete actions only, kept apart from the brand accent */
+    --berry:#B14432;
+    --berry-deep:#93362A;
+
+    --shadow-1: 0 2px 6px rgba(10,7,14,.14);
+    --shadow-2: 0 12px 26px rgba(10,7,14,.24);
+    --shadow-3: 0 22px 44px rgba(6,4,9,.34);
+    --radius-page: 20px;
+
+    --font-display:'Fraunces', Georgia, 'Times New Roman', serif;
+    --font-body:'Atkinson Hyperlegible', 'Segoe UI', system-ui, sans-serif;
+    --font-hand:'Caveat', cursive;
+  }
+
+  *,*::before,*::after{ box-sizing:border-box; }
+  html{ -webkit-text-size-adjust:100%; }
+  body{
+    margin:0;
+    background:var(--cloth);
+    color:var(--cream);
+    font-family:var(--font-body);
+    background-image:
+      radial-gradient(120% 90% at 50% -14%, rgba(255,255,255,.07), transparent 62%),
+      repeating-linear-gradient(45deg, rgba(255,255,255,.022) 0 1px, transparent 1px 7px),
+      repeating-linear-gradient(-45deg, rgba(0,0,0,.03) 0 1px, transparent 1px 7px);
+  }
+  h1,h2,h3{ font-family:var(--font-display); font-optical-sizing:auto; margin:0; text-wrap:balance; }
+  button{ font-family:inherit; }
+  img{ max-width:100%; }
+  ::selection{ background:var(--gold); color:var(--cloth-deep); }
+  :focus-visible{ outline:3px solid var(--gold); outline-offset:2px; border-radius:6px; }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+  }
+
+  /* ---------- layout shells ---------- */
+  #app{ min-height:100vh; display:flex; flex-direction:column; }
+  .wrap{ width:100%; max-width:1180px; margin:0 auto; padding:0 20px; }
+
+  .brand{ display:flex; flex-direction:row; align-items:center; gap:26px; flex-wrap:wrap; }
+  .brand-logo{ height:160px; width:auto; flex:none; }
+  .brand-logo svg{ display:block; height:100%; width:auto; }
+  .brand-text{ display:flex; flex-direction:column; gap:6px; }
+  .brand-name{ font-size:clamp(3.4rem,7vw,5.6rem); font-weight:700; color:var(--cream); letter-spacing:-.01em; line-height:.95; }
+  .brand-tagline{ margin:0; font-size:1.3rem; color:var(--cream-soft); font-style:italic; max-width:30ch; line-height:1.3; }
+  .topline{ border-bottom:1px solid var(--cloth-line); padding:26px 0 28px; margin-bottom:6px; }
+  @media (max-width:600px){ .brand-logo{ height:120px; } }
+
+  /* ---------- gallery ---------- */
+  .gallery-hero{
+    padding:56px 0 50px;
+    display:flex; align-items:center; justify-content:space-between; gap:40px; flex-wrap:wrap;
+  }
+  .gallery-hero-copy{ flex:1 1 420px; min-width:280px; }
+  .gallery-hero h2{ font-size:clamp(3.2rem,7.4vw,5.8rem); color:var(--cream); line-height:.96; font-weight:600; letter-spacing:-.01em; }
+  .gallery-hero h2 em{ font-style:italic; color:var(--gold-soft); }
+  .gallery-hero p{ margin:22px 0 30px; color:var(--cream-soft); font-size:1.12rem; max-width:50ch; line-height:1.65; }
+  .hero-badges{ display:flex; gap:22px; margin-top:26px; flex-wrap:wrap; }
+  .hero-badge{ font-size:.84rem; font-weight:600; color:var(--cream-soft); display:inline-flex; align-items:center; gap:7px; }
+  .hero-badge svg{ color:var(--gold); flex:none; }
+  .gallery-hero-art{ flex:0 0 auto; display:flex; justify-content:center; padding:10px 24px; }
+
+  /* ---------- book mockup (hardcover product-shot look) ---------- */
+  .book-mockup{ position:relative; width:230px; transform:rotate(-3deg); transition:transform .25s ease; }
+  .book-mockup:hover{ transform:rotate(-1deg) translateY(-4px); }
+  .book-mockup .stack-edge{ position:absolute; inset:0; border-radius:4px 16px 16px 4px; box-shadow:var(--shadow-1); }
+  .book-mockup .se1{ background:var(--paper); transform:translate(6px,7px); }
+  .book-mockup .se2{ background:#EDE1C6; transform:translate(12px,13px); }
+  .book-mockup .cover-face{
+    position:relative; z-index:2; aspect-ratio:3/4; border-radius:4px 16px 16px 4px;
+    box-shadow:var(--shadow-3); overflow:hidden; display:flex; flex-direction:column;
+    background:var(--paper-white);
+  }
+  .book-mockup .cover-face::before{
+    content:''; position:absolute; left:0; top:0; bottom:0; width:14%; z-index:4; pointer-events:none;
+    background:linear-gradient(90deg, rgba(0,0,0,.28), rgba(0,0,0,0));
+  }
+  .book-mockup .cover-face::after{
+    content:''; position:absolute; left:14%; top:0; bottom:0; width:2px; z-index:4; pointer-events:none;
+    background:rgba(255,255,255,.4);
+  }
+  .book-mockup .ground-shadow{
+    position:absolute; left:6%; right:0; bottom:-18px; height:22px; z-index:0;
+    background:radial-gradient(ellipse at center, rgba(0,0,0,.48), transparent 72%); filter:blur(4px);
+  }
+  .hero-mockup{ width:290px; }
+
+  /* ---------- how it works (editorial numbered list, no cards) ---------- */
+  .how-section{ padding:64px 0 8px; }
+  .how-section h2{ font-size:2rem; color:var(--cream); font-weight:600; }
+  .how-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:22px; margin-top:30px; }
+  .how-step .num{ font-family:var(--font-display); font-optical-sizing:auto; font-weight:600; font-size:3rem; color:var(--gold); line-height:1; opacity:.95; }
+  .how-step h3{ font-size:1.16rem; color:var(--cream); margin:10px 0 7px; font-weight:600; }
+  .how-step p{ margin:0; font-size:.94rem; color:var(--cream-soft); line-height:1.55; max-width:34ch; }
+  @media (max-width:700px){ .how-grid{ grid-template-columns:1fr; gap:28px; } .book-menu{ opacity:1; transform:none; } }
+
+  .shelf-head{ padding:20px 0 0; }
+  .shelf-head h2{ font-size:2rem; color:var(--cream); font-weight:600; }
+
+  .empty-shelf{ grid-column:1/-1; text-align:center; padding:34px 10px 10px; color:var(--cream-soft); }
+  .empty-shelf svg{ color:var(--gold); }
+  .empty-shelf p{ font-size:.98rem; max-width:38ch; margin:14px auto 0; }
+
+  .btn{
+    font-family:var(--font-body);
+    font-weight:700;
+    border:none;
+    border-radius:999px;
+    cursor:pointer;
+    display:inline-flex; align-items:center; gap:9px;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease, color .15s ease;
+    white-space:nowrap;
+  }
+  .btn-primary{
+    background:linear-gradient(180deg, var(--gold-soft), var(--gold) 70%); color:var(--cloth-deep);
+    padding:16px 30px; font-size:1.08rem;
+    box-shadow:0 10px 24px -8px rgba(226,169,62,.55), inset 0 1px 0 rgba(255,255,255,.5);
+  }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 14px 28px -8px rgba(226,169,62,.65), inset 0 1px 0 rgba(255,255,255,.5); }
+  .btn-primary:active{ transform:translateY(0) scale(.97); }
+  .btn-danger{
+    background:linear-gradient(180deg, #C4573F, var(--berry) 70%); color:#fff;
+    padding:14px 24px; font-size:1rem;
+    box-shadow:0 10px 22px -8px rgba(177,68,50,.55), inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  .btn-danger:hover{ transform:translateY(-2px); }
+  .btn-danger:active{ transform:translateY(0) scale(.97); }
+  .btn-ghost{
+    background:var(--paper-white); color:var(--ink);
+    border:1.5px solid var(--line); padding:11px 18px; font-size:.95rem;
+  }
+  .btn-ghost:hover{ border-color:var(--cloth-light); color:var(--cloth-deep); }
+  .btn-ghost:active{ transform:scale(.97); }
+  .btn-outline{
+    background:transparent; color:var(--cream); border:1.5px solid var(--cloth-line);
+    padding:12px 20px; font-size:.98rem;
+  }
+  .btn-outline:hover{ border-color:var(--gold); color:var(--gold-soft); background:rgba(226,169,62,.08); }
+  .btn-outline:active{ transform:scale(.97); }
+  .btn-icon{
+    background:rgba(247,239,220,.06); border:1.5px solid var(--cloth-line); color:var(--cream-soft);
+    width:38px; height:38px; border-radius:12px; display:inline-flex; align-items:center; justify-content:center;
+    cursor:pointer; transition:.15s ease;
+  }
+  .btn-icon:hover{ border-color:var(--gold); color:var(--gold-soft); background:rgba(226,169,62,.10); }
+  .btn-icon:disabled{ opacity:.35; cursor:not-allowed; }
+  .btn-icon:disabled:hover{ border-color:var(--cloth-line); color:var(--cream-soft); background:rgba(247,239,220,.06); }
+
+  .shelf{
+    padding:8px 0 70px;
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(210px,1fr));
+    gap:34px 24px;
+  }
+  .book-card{
+    position:relative;
+    aspect-ratio:3/4;
+    cursor:pointer;
+    transition:transform .18s ease;
+  }
+  .book-card .stack-edge{ position:absolute; inset:0; border-radius:4px 16px 16px 4px; box-shadow:var(--shadow-1); }
+  .book-card .se1{ background:var(--paper); transform:translate(5px,6px); }
+  .book-card .se2{ background:#EDE1C6; transform:translate(10px,11px); }
+  .book-card .cover-face{
+    position:relative; z-index:2; height:100%; display:flex; flex-direction:column;
+    border-radius:4px 16px 16px 4px; box-shadow:var(--shadow-2); overflow:hidden;
+    background:var(--paper-white);
+    transition:box-shadow .18s ease;
+  }
+  .book-card .cover-face::before{
+    content:''; position:absolute; left:0; top:0; bottom:0; width:13%; z-index:4; pointer-events:none;
+    background:linear-gradient(90deg, rgba(0,0,0,.24), rgba(0,0,0,0));
+  }
+  .book-card:nth-child(3n+1){ transform:rotate(-1.6deg); }
+  .book-card:nth-child(3n+2){ transform:rotate(1deg); }
+  .book-card:nth-child(3n+3){ transform:rotate(-0.6deg); }
+  .book-card:hover{ transform:translateY(-7px) rotate(0deg); }
+  .book-card:hover .cover-face{ box-shadow:var(--shadow-3); }
+  .book-cover{
+    flex:1; position:relative; display:flex; align-items:center; justify-content:center;
+    padding:18px 16px 8px;
+  }
+  .book-cover .scene{ font-size:3.6rem; filter:drop-shadow(0 6px 8px rgba(0,0,0,.14)); }
+  .book-foot{ padding:12px 16px 16px; background:var(--paper-white); position:relative; z-index:1; }
+  .book-title{
+    font-family:var(--font-display); font-optical-sizing:auto; font-weight:600; font-size:1.08rem; line-height:1.18; color:var(--ink);
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .book-author{ font-family:var(--font-hand); font-size:1.15rem; color:var(--ink-soft); margin-top:2px; }
+  .book-pages{ font-size:.74rem; color:var(--ink-faint); margin-top:6px; letter-spacing:.3px; text-transform:uppercase; }
+  .book-menu{
+    position:absolute; top:10px; right:10px; z-index:5; display:flex; gap:6px;
+    opacity:0; transform:translateY(-4px); transition:.15s ease;
+  }
+  .book-card:hover .book-menu, .book-card:focus-within .book-menu{ opacity:1; transform:translateY(0); }
+  .mini-icon-btn{
+    width:30px; height:30px; border-radius:9px; border:none; cursor:pointer;
+    background:rgba(255,253,248,.94); color:var(--ink-soft);
+    display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-1);
+  }
+  .mini-icon-btn:hover{ color:var(--cloth-deep); }
+  .mini-icon-btn.danger:hover{ color:var(--berry); }
+
+  .new-book-card{
+    aspect-ratio:3/4; border-radius:16px; border:2px dashed var(--cloth-line);
+    background:rgba(247,239,220,.03); cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    color:var(--cream-soft); transition:.2s ease;
+  }
+  .new-book-card:hover{ border-color:var(--gold); color:var(--gold-soft); background:rgba(226,169,62,.06); }
+  .new-book-card .plus-circle{
+    width:50px; height:50px; border-radius:50%; background:rgba(226,169,62,.14);
+    display:flex; align-items:center; justify-content:center; color:var(--gold);
+  }
+  .new-book-card span{ font-family:var(--font-body); font-weight:700; font-size:.92rem; }
+
+  /* ---------- editor ---------- */
+  .editor{ display:flex; flex-direction:column; flex:1; }
+  .editor-top{ display:flex; align-items:center; gap:12px; padding:18px 0 10px; flex-wrap:wrap; }
+  .title-field{
+    font-family:var(--font-display); font-optical-sizing:auto; font-weight:600; font-size:1.2rem; color:var(--cream);
+    background:transparent; border:none; border-bottom:2px dashed transparent;
+    padding:4px 2px; min-width:120px; flex:1;
+  }
+  .title-field::placeholder{ color:var(--cream-faint); }
+  .title-field:hover, .title-field:focus{ border-color:var(--cloth-line); }
+  .save-pill{
+    font-size:.76rem; color:var(--gold-soft); background:var(--gold-tint);
+    padding:6px 12px; border-radius:999px; font-weight:700; letter-spacing:.2px;
+    display:flex; align-items:center; gap:6px; transition:opacity .3s ease;
+  }
+  .save-pill .dot{ width:6px; height:6px; border-radius:50%; background:var(--gold); }
+
+  .page-strip{
+    display:flex; gap:10px; padding:4px 0 18px; overflow-x:auto; scrollbar-width:thin;
+  }
+  .page-thumb{
+    flex:none; width:62px; height:82px; border-radius:7px; border:2px solid transparent;
+    cursor:pointer; position:relative; overflow:hidden; box-shadow:var(--shadow-1);
+    display:flex; align-items:center; justify-content:center; font-size:1.3rem;
+    transition:transform .15s ease, border-color .15s ease;
+  }
+  .page-thumb:hover{ transform:translateY(-3px); }
+  .page-thumb.active{ border-color:var(--gold); }
+  .page-thumb .pnum{
+    position:absolute; bottom:2px; right:4px; font-size:.6rem; font-weight:700;
+    color:rgba(0,0,0,.35); font-family:var(--font-body);
+  }
+  .page-thumb.cover-thumb::after{
+    content:'COVER'; position:absolute; top:2px; left:0; right:0; text-align:center;
+    font-size:.48rem; letter-spacing:.6px; font-weight:800; color:rgba(0,0,0,.42);
+  }
+  .add-page-btn{
+    flex:none; width:62px; height:82px; border-radius:7px; border:2px dashed var(--cloth-line);
+    background:transparent; cursor:pointer; color:var(--cream-faint);
+    display:flex; align-items:center; justify-content:center; transition:.15s ease;
+  }
+  .add-page-btn:hover{ border-color:var(--gold); color:var(--gold-soft); }
+
+  .editor-main{ display:flex; gap:28px; align-items:flex-start; padding-bottom:56px; flex:1; }
+  .canvas-col{ flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .page-toolbar{ display:flex; gap:8px; align-items:center; }
+  .page-toolbar .label{ font-family:var(--font-body); font-weight:700; color:var(--cream-soft); font-size:.85rem; }
+
+  .canvas-shell{ width:100%; max-width:430px; position:relative; }
+  .canvas-shell::after{
+    content:''; position:absolute; left:10%; right:6%; bottom:-16px; height:22px; z-index:-1;
+    background:radial-gradient(ellipse at center, rgba(0,0,0,.5), transparent 72%); filter:blur(5px);
+  }
+  .page-canvas{
+    position:relative; width:100%; aspect-ratio:3/4; border-radius:var(--radius-page);
+    box-shadow:var(--shadow-3), 0 30px 40px -20px rgba(0,0,0,.55); overflow:hidden; display:flex; flex-direction:column;
+    transition:background .2s ease;
+  }
+  .page-canvas::after{
+    content:''; position:absolute; top:0; right:0; width:0; height:0;
+    border-style:solid; border-width:0 26px 26px 0;
+    border-color:transparent rgba(0,0,0,.08) transparent transparent;
+    pointer-events:none;
+  }
+  .scene-zone{
+    flex:0 0 68%; position:relative; display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+  .scene-zone .scene-emoji{ font-size:6.6rem; filter:drop-shadow(0 8px 10px rgba(0,0,0,.15)); display:inline-block; transition:transform .18s ease; }
+  .scene-zone img.scene-photo{ width:100%; height:100%; object-fit:cover; }
+  #scenePhoto{ cursor:grab; touch-action:none; user-select:none; -webkit-user-drag:none; transition:transform .18s ease; }
+  #scenePhoto:active{ cursor:grabbing; }
+  .photo-hint{
+    position:absolute; left:50%; bottom:10px; transform:translateX(-50%);
+    background:rgba(21,54,48,.68); color:var(--cream); font-size:.7rem; font-weight:600;
+    padding:5px 11px; border-radius:999px; display:flex; align-items:center; gap:5px;
+    pointer-events:none;
+  }
+  .scene-empty{
+    display:flex; flex-direction:column; align-items:center; gap:8px; color:rgba(36,28,48,.38);
+    font-family:var(--font-body); font-weight:700; font-size:.85rem; text-align:center; padding:0 20px;
+  }
+  .text-zone{ flex:1; position:relative; padding:14px 20px 18px; display:flex; }
+  .story-text{
+    width:100%; resize:none; border:none; background:transparent; outline:none;
+    font-family:var(--font-body); color:var(--ink); line-height:1.5;
+    overflow-y:auto;
+  }
+  .story-text::placeholder{ color:rgba(36,28,48,.34); }
+  .fs-sm{ font-size:.92rem; }
+  .fs-md{ font-size:1.12rem; }
+  .fs-lg{ font-size:1.38rem; }
+
+  .cover-zone{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:16px 22px 22px; text-align:center; }
+  .cover-title-input{
+    width:100%; text-align:center; font-family:var(--font-display); font-optical-sizing:auto; font-weight:700;
+    font-size:1.55rem; color:var(--ink); background:transparent; border:none; outline:none; line-height:1.2;
+  }
+  .cover-title-input::placeholder{ color:rgba(36,28,48,.32); }
+  .cover-by{ font-family:var(--font-hand); font-size:1.05rem; color:var(--ink-soft); }
+  .cover-author-input{
+    width:100%; text-align:center; font-family:var(--font-hand); font-size:1.4rem; color:var(--ink-soft);
+    background:transparent; border:none; outline:none;
+  }
+  .cover-author-input::placeholder{ color:rgba(36,28,48,.3); }
+
+  .sticker-layer{ position:absolute; inset:0; pointer-events:none; }
+  .sticker{
+    position:absolute; font-size:2rem; transform:translate(-50%,-50%);
+    cursor:grab; pointer-events:auto; touch-action:none; user-select:none;
+    filter:drop-shadow(0 4px 5px rgba(0,0,0,.18));
+  }
+  .sticker:active{ cursor:grabbing; }
+  .sticker svg, .sticker img{ width:2rem; height:2rem; display:block; }
+  .sticker-del{
+    position:absolute; width:22px; height:22px; border-radius:50%; background:var(--berry-deep);
+    color:#fff; border:2px solid #fff; font-size:.7rem; line-height:1; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; pointer-events:auto; box-shadow:var(--shadow-1); transform:translate(10px,-14px);
+  }
+
+  .canvas-hint{ font-size:.78rem; color:var(--cream-faint); text-align:center; }
+
+  /* tool tray */
+  .tray{ width:300px; flex:none; }
+  .tray-card{ background:var(--paper-white); border-radius:18px; box-shadow:var(--shadow-2); overflow:hidden; }
+  .tray-tabs{ display:flex; gap:4px; padding:10px 10px 8px; border-bottom:1px solid var(--line-soft); }
+  .tray-tab{
+    flex:1; background:transparent; border:none; padding:9px 4px 8px; cursor:pointer;
+    font-family:var(--font-body); font-weight:700; font-size:.76rem; color:var(--ink-faint);
+    display:flex; flex-direction:column; align-items:center; gap:4px; border-radius:11px 11px 0 0;
+    transition:background .15s ease, color .15s ease;
+  }
+  .tray-tab.active{ color:var(--cloth-deep); background:var(--gold-tint); }
+  .tray-body{ padding:16px; max-height:420px; overflow-y:auto; }
+  .tray-body h4{ font-family:var(--font-body); font-size:.78rem; color:var(--ink-soft); margin:0 0 8px; letter-spacing:.5px; text-transform:uppercase; }
+  .tray-section + .tray-section{ margin-top:16px; }
+  .tray-lead{ font-size:.86rem; color:var(--ink-soft); line-height:1.5; margin:0 0 14px; }
+  .tray-foot{
+    border-top:1px solid var(--line-soft); padding:13px 16px 15px; font-size:.78rem;
+    color:var(--ink-faint); line-height:1.5; display:flex; gap:8px; align-items:flex-start;
+  }
+  .tray-foot svg{ flex:none; margin-top:2px; color:var(--gold-deep); }
+
+  .swatch-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:9px; }
+  .swatch{ aspect-ratio:1; border-radius:11px; border:2.5px solid transparent; cursor:pointer; box-shadow:inset 0 0 0 1px rgba(0,0,0,.08); }
+  .swatch.active{ border-color:var(--cloth-deep); }
+
+  .emoji-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:6px; }
+  .emoji-btn{
+    aspect-ratio:1; border-radius:10px; border:none; background:var(--paper);
+    font-size:1.25rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition:transform .1s ease, background .1s ease;
+  }
+  .emoji-btn:hover{ background:var(--line-soft); transform:scale(1.1); }
+  .emoji-btn svg, .emoji-btn img{ width:1.35rem; height:1.35rem; display:block; }
+
+  .sticker-search{ position:relative; margin-bottom:14px; }
+  .sticker-search svg{
+    position:absolute; left:11px; top:50%; transform:translateY(-50%);
+    color:var(--ink-faint); pointer-events:none;
+  }
+  .sticker-search input{
+    width:100%; padding:10px 12px 10px 34px; border-radius:12px; border:2px solid var(--line);
+    background:var(--paper); font-family:var(--font-body); font-size:.88rem; color:var(--ink);
+    outline:none; transition:border-color .15s ease;
+  }
+  .sticker-search input::placeholder{ color:var(--ink-faint); }
+  .sticker-search input:focus{ border-color:var(--cloth-deep); }
+  .search-empty{ font-size:.85rem; color:var(--ink-soft); text-align:center; padding:18px 8px 12px; line-height:1.5; }
+
+  .draw-sticker-btn{
+    width:100%; margin-top:12px; padding:11px; border-radius:12px; border:2px dashed var(--cloth-deep);
+    background:var(--gold-tint); color:var(--cloth-deep); font-family:var(--font-body); font-weight:700; font-size:.85rem;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px;
+  }
+  .draw-sticker-btn:hover{ background:rgba(226,169,62,.28); }
+
+  .draw-card{ max-width:340px; }
+  .draw-card h3{ margin:0 0 4px; }
+  .draw-card p{ margin:0 0 14px; }
+  #drawCanvas{
+    display:block; width:100%; aspect-ratio:1; border-radius:14px; border:2px solid var(--line);
+    cursor:crosshair; touch-action:none; background:var(--paper-white);
+  }
+  .draw-tools{ display:flex; align-items:center; gap:10px; margin-top:12px; }
+  .draw-colors{ display:flex; flex-wrap:wrap; gap:6px; flex:1; }
+  .draw-color{
+    width:22px; height:22px; border-radius:50%; border:2px solid transparent; cursor:pointer;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);
+  }
+  .draw-color.active{ border-color:var(--cloth-deep); transform:scale(1.15); }
+  .draw-sizes{ display:flex; gap:5px; flex:none; }
+  .draw-size-btn{
+    width:30px; height:30px; border-radius:9px; border:2px solid var(--line); background:var(--paper-white);
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .draw-size-btn span{ display:block; border-radius:50%; background:var(--ink); }
+  .draw-size-btn.active{ border-color:var(--cloth-deep); background:var(--gold-tint); }
+  .draw-label-input{
+    width:100%; margin-top:12px; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
+    background:var(--paper); font-family:var(--font-body); font-size:.88rem; color:var(--ink); outline:none;
+  }
+  .draw-label-input:focus{ border-color:var(--cloth-deep); }
+  .draw-label-input::placeholder{ color:var(--ink-faint); }
+
+  .upload-btn{
+    width:100%; padding:11px; border-radius:12px; border:2px dashed var(--line); background:transparent;
+    color:var(--ink-soft); font-family:var(--font-body); font-weight:700; font-size:.85rem; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:7px;
+  }
+  .upload-btn:hover{ border-color:var(--cloth-deep); color:var(--cloth-deep); }
+  .remove-photo{ margin-top:8px; width:100%; text-align:center; font-size:.78rem; color:var(--berry); background:none; border:none; cursor:pointer; text-decoration:underline; }
+
+  .size-row{ display:flex; gap:8px; }
+  .size-btn{
+    flex:1; padding:9px 0; border-radius:10px; border:2px solid var(--line); background:transparent;
+    cursor:pointer; font-family:var(--font-display); font-optical-sizing:auto; font-weight:700; color:var(--ink-soft);
+  }
+  .size-btn.active{ border-color:var(--cloth-deep); color:var(--cloth-deep); background:var(--gold-tint); }
+  .size-btn.sz1{ font-size:.75rem; } .size-btn.sz2{ font-size:.95rem; } .size-btn.sz3{ font-size:1.15rem; }
+
+  .zoom-row{ display:flex; align-items:center; justify-content:center; gap:16px; }
+  .zoom-btn{
+    width:38px; height:38px; border-radius:10px; border:2px solid var(--line); background:transparent;
+    color:var(--ink-soft); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:.15s ease;
+  }
+  .zoom-btn:hover{ border-color:var(--cloth-deep); color:var(--cloth-deep); }
+  .zoom-btn:disabled{ opacity:.35; cursor:not-allowed; }
+  .zoom-btn:disabled:hover{ border-color:var(--line); color:var(--ink-soft); }
+  .zoom-pct{
+    font-family:var(--font-body); font-weight:700; color:var(--ink-soft); font-size:.88rem;
+    min-width:46px; text-align:center; font-variant-numeric:tabular-nums;
+  }
+
+  .color-row{ display:flex; gap:9px; flex-wrap:wrap; }
+  .color-dot{ width:30px; height:30px; border-radius:50%; border:2.5px solid transparent; cursor:pointer; box-shadow:inset 0 0 0 1px rgba(0,0,0,.08); }
+  .color-dot.active{ border-color:var(--ink); transform:scale(1.08); }
+
+  @media (max-width:860px){
+    .editor-main{ flex-direction:column; align-items:stretch; }
+    .tray{ width:100%; }
+    .tray-body{ max-height:none; }
+    .canvas-shell{ max-width:340px; margin:0 auto; }
+  }
+
+  /* modal */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(9,7,12,.55); display:flex; align-items:center; justify-content:center;
+    padding:20px; z-index:50;
+  }
+  .modal-card{
+    background:var(--paper-white); border-radius:18px; padding:26px; max-width:340px; width:100%;
+    box-shadow:var(--shadow-3); text-align:center;
+  }
+  .modal-icon{
+    width:52px; height:52px; border-radius:50%; margin:0 auto; background:rgba(177,68,50,.12); color:var(--berry);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .modal-card h3{ margin:14px 0 6px; font-size:1.15rem; color:var(--ink); }
+  .modal-card p{ margin:0 0 18px; color:var(--ink-soft); font-size:.9rem; }
+  .modal-actions{ display:flex; gap:10px; justify-content:center; }
+
+  /* book preview */
+  .preview-overlay{
+    position:fixed; inset:0; background:var(--cloth-deep); z-index:80;
+    display:flex; flex-direction:column;
+  }
+  .preview-top{
+    display:flex; align-items:center; gap:14px; padding:16px 20px; flex:none;
+    border-bottom:1px solid var(--cloth-line);
+  }
+  .preview-title{
+    flex:1; text-align:center; color:var(--cream); font-family:var(--font-display); font-optical-sizing:auto;
+    font-weight:600; font-size:1.1rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:0 8px;
+  }
+  .preview-stage{
+    flex:1; min-height:0; display:flex; align-items:center; justify-content:center; gap:16px; padding:16px;
+  }
+  .preview-page-wrap{ width:100%; max-width:400px; height:100%; max-height:560px; display:flex; flex-direction:column; justify-content:center; }
+  .preview-page-wrap .page-canvas{ animation:previewPageIn .3s ease; transform-origin:left center; }
+  @keyframes previewPageIn{
+    from{ opacity:0; transform:rotateY(10deg) scale(.96); }
+    to{ opacity:1; transform:rotateY(0) scale(1); }
+  }
+  .preview-nav-btn{
+    width:48px; height:48px; border-radius:50%; border:none; background:rgba(247,239,220,.10); color:var(--cream);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex:none; transition:.15s ease;
+  }
+  .preview-nav-btn:hover{ background:rgba(247,239,220,.2); }
+  .preview-nav-btn:disabled{ opacity:.25; cursor:not-allowed; }
+  .preview-footer{ display:flex; flex-direction:column; align-items:center; gap:10px; padding:6px 20px 22px; flex:none; }
+  .preview-dots{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; max-width:300px; }
+  .preview-dot{ width:8px; height:8px; border-radius:50%; background:rgba(247,239,220,.25); cursor:pointer; border:none; padding:0; }
+  .preview-dot.active{ background:var(--gold); }
+  .preview-count{ color:var(--cream-faint); font-size:.8rem; font-weight:600; font-variant-numeric:tabular-nums; }
+  @media (max-width:640px){
+    .preview-nav-btn{ width:38px; height:38px; }
+    .preview-title{ font-size:.95rem; }
+  }
+
+  /* offscreen staging used to rasterize pages for PDF export — same shapes as the print document */
+  .pdf-stage{ position:fixed; left:-9999px; top:0; pointer-events:none; }
+
+  /* in-page PDF viewer — avoids relying on window.open, which pop-up blockers can silently swallow */
+  .pdf-overlay{ position:fixed; inset:0; background:var(--cloth-deep); z-index:85; display:flex; flex-direction:column; }
+  .pdf-overlay-top{
+    display:flex; align-items:center; gap:12px; padding:14px 20px; flex:none;
+    border-bottom:1px solid var(--cloth-line);
+  }
+  .pdf-overlay-title{
+    flex:1; color:var(--cream); font-family:var(--font-display); font-optical-sizing:auto; font-weight:600;
+    font-size:1.05rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .pdf-overlay-hint{
+    margin:0; padding:10px 20px; background:var(--gold-tint); color:var(--cream); font-size:.85rem;
+    text-align:center; line-height:1.5; flex:none;
+  }
+  .pdf-overlay-frame{ flex:1; width:100%; border:none; background:#525659; }
+  .print-page{
+    width:8.5in; height:11in; position:relative; overflow:hidden; display:flex; flex-direction:column;
+    font-family:'Atkinson Hyperlegible', sans-serif;
+  }
+  .print-scene{ flex:0 0 68%; position:relative; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .print-scene .scene-emoji{ font-size:7.5rem; display:inline-block; }
+  .print-scene img{ width:100%; height:100%; object-fit:cover; }
+  .print-text{ flex:1; padding:22px 34px; color:#241C30; line-height:1.55; white-space:pre-wrap; font-size:1rem; }
+  .print-cover{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:30px; }
+  .print-cover .t{ font-family:Georgia, serif; font-weight:700; font-size:2rem; color:#241C30; }
+  .print-cover .a{ font-family:cursive; font-size:1.6rem; color:#5C5369; margin-top:8px; }
+  .print-sticker{ position:absolute; font-size:2rem; transform:translate(-50%,-50%); }
+  .print-sticker svg, .print-sticker img{ width:2rem; height:2rem; display:block; }
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--cloth-deep); color:var(--cream); padding:12px 22px; border-radius:999px; font-size:.86rem;
+    font-weight:600; box-shadow:var(--shadow-3); opacity:0; transition:.25s ease; z-index:60; pointer-events:none;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+
+<div id="app"></div>
+<div id="toast" class="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "paperTales.books.v4";
+  var fileInput = null;
+
+  var ICON_PATHS = {
+    book: '<path d="M12 7c-1.6-1.1-4.2-1.6-6.3-1.3-.4.05-.7.4-.7.85v11.6c0 .5.45.9.95.82 2-.3 4.4.1 6.05 1.16M12 7c1.6-1.1 4.2-1.6 6.3-1.3.4.05.7.4.7.85v11.6c0 .5-.45.9-.95.82-2-.3-4.4.1-6.05 1.16M12 7v12.2"/>',
+    chevronLeft: '<polyline points="15 18 9 12 15 6"/>',
+    chevronRight: '<polyline points="9 18 15 12 9 6"/>',
+    plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+    trash: '<polyline points="4 7 20 7"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>',
+    printer: '<polyline points="6 9 6 3 18 3 18 9"/><rect x="5" y="9" width="14" height="7" rx="1.5"/><rect x="7.5" y="14" width="9" height="7"/>',
+    copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M5.5 15.5H5A1.5 1.5 0 0 1 3.5 14V5.5A1.5 1.5 0 0 1 5 4h8.5A1.5 1.5 0 0 1 15 5.5v1"/>',
+    image: '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-5 3.5 3.5L16.5 11 20 15"/>',
+    star: '<path d="M12 3.5l2.6 5.4 5.9.7-4.3 4.1 1.1 5.9L12 16.7l-5.3 2.9 1.1-5.9L3.5 9.6l5.9-.7L12 3.5Z"/>',
+    palette: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.4-.3-.4-.5-.8-.5-1.3 0-1 .8-1.8 1.8-1.8H16.5A4.5 4.5 0 0 0 21 10.5C21 6.4 17 3 12 3Z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="9.5" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/><circle cx="16.5" cy="10.5" r="1"/>',
+    upload: '<path d="M12 15V4"/><polyline points="7.5 8.5 12 4 16.5 8.5"/><path d="M4.5 15.5V18a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5v-2.5"/>',
+    check: '<polyline points="5 12.5 9.5 17 19 6"/>',
+    info: '<circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.6" r=".6" fill="currentColor" stroke="none"/>',
+    undo: '<path d="M8.5 15 3.5 10l5-5"/><path d="M3.5 10h10.5a6 6 0 0 1 0 12H10"/>',
+    moveVertical: '<polyline points="8 8 12 4 16 8"/><polyline points="8 16 12 20 16 16"/><line x1="12" y1="4" x2="12" y2="20"/>',
+    zoomIn: '<circle cx="10.5" cy="10.5" r="7"/><line x1="21" y1="21" x2="15.8" y2="15.8"/><line x1="10.5" y1="7.5" x2="10.5" y2="13.5"/><line x1="7.5" y1="10.5" x2="13.5" y2="10.5"/>',
+    zoomOut: '<circle cx="10.5" cy="10.5" r="7"/><line x1="21" y1="21" x2="15.8" y2="15.8"/><line x1="7.5" y1="10.5" x2="13.5" y2="10.5"/>',
+    search: '<circle cx="10.5" cy="10.5" r="7"/><line x1="21" y1="21" x2="15.8" y2="15.8"/>',
+    pencil: '<path d="M4 20l1-4.5L15.5 5l3.5 3.5L8.5 19 4 20Z"/><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"/>',
+    bookOpen: '<path d="M12 6.5c-1.6-1-4-1.5-6-1.2-.4.05-.7.4-.7.85v11.2c0 .5.45.9.95.82 1.9-.3 4.15.1 5.75 1.13M12 6.5c1.6-1 4-1.5 6-1.2.4.05.7.4.7.85v11.2c0 .5-.45.9-.95.82-1.9-.3-4.15.1-5.75 1.13M12 6.5v11.8"/>',
+    close: '<line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/>',
+    filePdf: '<path d="M14 3H7a1.5 1.5 0 0 0-1.5 1.5v15A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V8.5L14 3Z"/><path d="M14 3v5.5H19"/><line x1="12" y1="11.5" x2="12" y2="17.5"/><polyline points="9.3 15 12 17.5 14.7 15"/>'
+  };
+  function ico(name, size){
+    size = size || 18;
+    return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICON_PATHS[name]||"")+'</svg>';
+  }
+
+  var MAGIC_PEN_LOGO_SVG =
+    '<svg viewBox="0 0 520 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Magic Pen logo">'+
+      '<defs>'+
+        '<symbol id="mpStar5" viewBox="-1 -1 2 2"><polygon points="0,-1 0.294,-0.405 0.951,-0.309 0.475,0.154 0.588,0.809 0,0.5 -0.588,0.809 -0.475,0.154 -0.951,-0.309 -0.294,-0.405"/></symbol>'+
+        '<symbol id="mpSpark" viewBox="-1 -1 2 2"><polygon points="0,-1 0.28,-0.28 1,0 0.28,0.28 0,1 -0.28,0.28 -1,0 -0.28,-0.28"/></symbol>'+
+      '</defs>'+
+      '<ellipse cx="260" cy="150" rx="150" ry="95" fill="#DCEBFA"/>'+
+      '<path d="M120,90 C160,30 260,20 310,55 C345,80 330,115 355,140" fill="none" stroke="#E8B23D" stroke-width="7" stroke-linecap="round"/>'+
+      '<use href="#mpStar5" x="60" y="95" width="34" height="34" fill="#E8B23D"/>'+
+      '<use href="#mpStar5" x="150" y="45" width="26" height="26" fill="#E8B23D"/>'+
+      '<use href="#mpSpark" x="95" y="150" width="18" height="18" fill="#E8B23D"/>'+
+      '<use href="#mpSpark" x="330" y="160" width="16" height="16" fill="#E8B23D"/>'+
+      '<use href="#mpStar5" x="300" y="175" width="20" height="20" fill="#E8B23D"/>'+
+      '<ellipse cx="215" cy="232" rx="24" ry="15" fill="#6FAE7C"/>'+
+      '<ellipse cx="248" cy="238" rx="28" ry="17" fill="#8FC49A"/>'+
+      '<ellipse cx="284" cy="235" rx="26" ry="16" fill="#6FAE7C"/>'+
+      '<ellipse cx="312" cy="228" rx="20" ry="13" fill="#8FC49A"/>'+
+      '<g fill="#33478F">'+
+        '<path d="M352,152 C365,110 408,104 414,133 C398,138 378,144 356,151 Z"/>'+
+        '<ellipse cx="378" cy="166" rx="23" ry="13" transform="rotate(-8 378 166)"/>'+
+        '<circle cx="407" cy="159" r="10"/>'+
+        '<polygon points="414,156 428,159 414,164"/>'+
+        '<path d="M362,174 C348,183 339,198 348,207 C355,193 361,183 369,176 Z"/>'+
+      '</g>'+
+      '<circle cx="410" cy="156" r="1.6" fill="#DCEBFA"/>'+
+      '<rect x="245" y="115" width="30" height="100" fill="#D6BEEF"/>'+
+      '<polygon points="245,115 260,75 275,115" fill="#9B7FD1"/>'+
+      '<line x1="260" y1="75" x2="260" y2="55" stroke="#9B7FD1" stroke-width="2"/>'+
+      '<polygon points="260,55 279,62 260,69" fill="#F2A6C4"/>'+
+      '<rect x="210" y="150" width="26" height="70" fill="#C9AEE6"/>'+
+      '<polygon points="210,150 223,118 236,150" fill="#8F6FC2"/>'+
+      '<line x1="223" y1="118" x2="223" y2="100" stroke="#8F6FC2" stroke-width="2"/>'+
+      '<polygon points="223,100 240,106 223,112" fill="#F2A6C4"/>'+
+      '<rect x="284" y="150" width="26" height="70" fill="#C9AEE6"/>'+
+      '<polygon points="284,150 297,118 310,150" fill="#8F6FC2"/>'+
+      '<line x1="297" y1="118" x2="297" y2="100" stroke="#8F6FC2" stroke-width="2"/>'+
+      '<polygon points="297,100 314,106 297,112" fill="#F2A6C4"/>'+
+      '<rect x="225" y="190" width="70" height="45" rx="3" fill="#C9AEE6"/>'+
+      '<rect x="250" y="212" width="20" height="23" rx="10" fill="#8F6FC2"/>'+
+      '<circle cx="223" cy="178" r="4" fill="#FBF1DC"/>'+
+      '<circle cx="297" cy="178" r="4" fill="#FBF1DC"/>'+
+      '<circle cx="260" cy="150" r="5" fill="#FBF1DC"/>'+
+      '<g transform="rotate(35 400 90)">'+
+        '<rect x="388" y="8" width="24" height="112" rx="12" fill="#2B4FCB"/>'+
+        '<rect x="385" y="42" width="30" height="8" fill="#E8B23D"/>'+
+        '<rect x="385" y="68" width="30" height="8" fill="#E8B23D"/>'+
+        '<rect x="386" y="93" width="28" height="6" fill="#E8B23D"/>'+
+        '<use href="#mpStar5" x="391" y="20" width="18" height="18" fill="#F4CD7E"/>'+
+        '<path d="M412,25 C430,26 430,58 415,62 C421,47 419,33 412,30 Z" fill="#E8B23D"/>'+
+        '<polygon points="388,120 412,120 400,150" fill="#E8B23D"/>'+
+        '<circle cx="400" cy="149" r="2.2" fill="#B8862A"/>'+
+      '</g>'+
+      '<use href="#mpStar5" x="104" y="378" width="26" height="26" fill="#E8B23D"/>'+
+      '<use href="#mpStar5" x="392" y="378" width="26" height="26" fill="#E8B23D"/>'+
+      '<text x="260" y="418" text-anchor="middle" font-family="\'Baloo 2\', sans-serif" font-weight="800" font-size="60">'+
+        '<tspan fill="#2B4FCB">Magic </tspan><tspan fill="#E8B23D">Pen</tspan>'+
+      '</text>'+
+      '<path d="M175,438 Q260,458 345,438" fill="none" stroke="#E8B23D" stroke-width="5" stroke-linecap="round"/>'+
+    '</svg>';
+
+  var BG_COLORS = [
+    {name:"Cream", value:"#FBF4E6"},
+    {name:"Peach", value:"#F6D3B8"},
+    {name:"Mint", value:"#C3E6D2"},
+    {name:"Sky", value:"#C7DEF0"},
+    {name:"Butter", value:"#F5E6A8"},
+    {name:"Lilac", value:"#DCCBEE"},
+    {name:"Blush", value:"#F3CBDA"},
+    {name:"Seafoam", value:"#C0E3DC"}
+  ];
+
+  var SCENE_GROUPS = [
+    {label:"Sky & Space", emojis:["🌙","⭐","🌈","☀️","🌊","☁️","🪐","🚀"]},
+    {label:"Places", emojis:["🏰","🏡","🏕️","🎪","🌳","🏝️","⛰️","🏫"]},
+    {label:"Creatures", emojis:["🦄","🐉","🐬","🦋","🐻","🦁","🐸","🐢"]},
+    {label:"Fun & Magic", emojis:["🎈","🎂","🛸","🎨","✨","🔮","🎭","🍭"]}
+  ];
+
+  var STICKER_SVGS = {
+    bunny_pink:
+      '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">'+
+        '<ellipse cx="14" cy="10" rx="5" ry="11" fill="#FFD6E6" transform="rotate(-18 14 10)"/>'+
+        '<ellipse cx="26" cy="10" rx="5" ry="11" fill="#FFD6E6" transform="rotate(18 26 10)"/>'+
+        '<ellipse cx="14" cy="11" rx="2.6" ry="7" fill="#FFB3D1" transform="rotate(-18 14 11)"/>'+
+        '<ellipse cx="26" cy="11" rx="2.6" ry="7" fill="#FFB3D1" transform="rotate(18 26 11)"/>'+
+        '<ellipse cx="20" cy="32" rx="11" ry="8" fill="#FFFDF8"/>'+
+        '<circle cx="20" cy="21" r="11" fill="#FFFDF8"/>'+
+        '<circle cx="14.5" cy="24" r="2.3" fill="#FFC2DC"/>'+
+        '<circle cx="25.5" cy="24" r="2.3" fill="#FFC2DC"/>'+
+        '<circle cx="16" cy="19" r="1.6" fill="#2A2140"/>'+
+        '<circle cx="24" cy="19" r="1.6" fill="#2A2140"/>'+
+        '<path d="M18.3 22.5 L20 24 L21.7 22.5" fill="none" stroke="#E88AA8" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>'+
+      '</svg>',
+    bunny_blue:
+      '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">'+
+        '<ellipse cx="14" cy="10" rx="5" ry="11" fill="#CFE3F7" transform="rotate(-14 14 10)"/>'+
+        '<ellipse cx="26" cy="10" rx="5" ry="11" fill="#CFE3F7" transform="rotate(14 26 10)"/>'+
+        '<ellipse cx="14" cy="11" rx="2.6" ry="7" fill="#9FC5EE" transform="rotate(-14 14 11)"/>'+
+        '<ellipse cx="26" cy="11" rx="2.6" ry="7" fill="#9FC5EE" transform="rotate(14 26 11)"/>'+
+        '<ellipse cx="20" cy="32" rx="11" ry="8" fill="#FFFDF8"/>'+
+        '<circle cx="20" cy="21" r="11" fill="#FFFDF8"/>'+
+        '<circle cx="14.5" cy="24" r="2.1" fill="#D8E9FA"/>'+
+        '<circle cx="25.5" cy="24" r="2.1" fill="#D8E9FA"/>'+
+        '<circle cx="16" cy="19" r="1.6" fill="#2A2140"/>'+
+        '<circle cx="24" cy="19" r="1.6" fill="#2A2140"/>'+
+        '<path d="M18.3 22.5 L20 24 L21.7 22.5" fill="none" stroke="#8AA8CC" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>'+
+      '</svg>',
+    bunny_mint:
+      '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">'+
+        '<ellipse cx="14" cy="10" rx="5" ry="11" fill="#CDEFDC" transform="rotate(-16 14 10)"/>'+
+        '<ellipse cx="26" cy="10" rx="5" ry="11" fill="#CDEFDC" transform="rotate(16 26 10)"/>'+
+        '<ellipse cx="14" cy="11" rx="2.6" ry="7" fill="#9BDBB6" transform="rotate(-16 14 11)"/>'+
+        '<ellipse cx="26" cy="11" rx="2.6" ry="7" fill="#9BDBB6" transform="rotate(16 26 11)"/>'+
+        '<ellipse cx="20" cy="32" rx="11" ry="8" fill="#FFFDF8"/>'+
+        '<circle cx="20" cy="21" r="11" fill="#FFFDF8"/>'+
+        '<circle cx="14.5" cy="24" r="2.1" fill="#DBF3E4"/>'+
+        '<circle cx="25.5" cy="24" r="2.1" fill="#DBF3E4"/>'+
+        '<circle cx="16" cy="19" r="1.6" fill="#2A2140"/>'+
+        '<circle cx="24" cy="19" r="1.6" fill="#2A2140"/>'+
+        '<path d="M18.3 22.5 L20 24 L21.7 22.5" fill="none" stroke="#7BBF95" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>'+
+      '</svg>',
+    bunny_carrot:
+      '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">'+
+        '<ellipse cx="13" cy="10" rx="4.6" ry="10" fill="#FFD6E6" transform="rotate(-20 13 10)"/>'+
+        '<ellipse cx="24" cy="10" rx="4.6" ry="10" fill="#FFD6E6" transform="rotate(16 24 10)"/>'+
+        '<ellipse cx="13" cy="11" rx="2.3" ry="6.4" fill="#FFB3D1" transform="rotate(-20 13 11)"/>'+
+        '<ellipse cx="24" cy="11" rx="2.3" ry="6.4" fill="#FFB3D1" transform="rotate(16 24 11)"/>'+
+        '<ellipse cx="18" cy="31" rx="10" ry="7.5" fill="#FFFDF8"/>'+
+        '<circle cx="18" cy="21" r="10" fill="#FFFDF8"/>'+
+        '<circle cx="13" cy="23.5" r="2" fill="#FFC2DC"/>'+
+        '<circle cx="23" cy="23.5" r="2" fill="#FFC2DC"/>'+
+        '<circle cx="14.5" cy="19" r="1.5" fill="#2A2140"/>'+
+        '<circle cx="21.5" cy="19" r="1.5" fill="#2A2140"/>'+
+        '<path d="M16.6 22 L18 23.3 L19.4 22" fill="none" stroke="#E88AA8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>'+
+        '<path d="M27 30 L33 27 L30.5 36 Z" fill="#F0A24A"/>'+
+        '<path d="M28 27.5 l1 -3.4 M30.4 26.6 l1 -3.4 M32.6 27.3 l0.6 -3.2" stroke="#6FAE7C" stroke-width="1.3" stroke-linecap="round"/>'+
+      '</svg>',
+    bunny_hop:
+      '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">'+
+        '<path d="M4 26q3-1.5 7-2M3 31q3.5-.5 7.5-1.5" stroke="#DCCBEE" stroke-width="1.6" stroke-linecap="round" fill="none"/>'+
+        '<g transform="rotate(-14 20 20)">'+
+          '<ellipse cx="13" cy="8" rx="4.4" ry="10.5" fill="#E5D4F5" transform="rotate(-30 13 8)"/>'+
+          '<ellipse cx="25" cy="8" rx="4.4" ry="10.5" fill="#E5D4F5" transform="rotate(8 25 8)"/>'+
+          '<ellipse cx="13" cy="9" rx="2.2" ry="6.8" fill="#CBA8E8" transform="rotate(-30 13 9)"/>'+
+          '<ellipse cx="25" cy="9" rx="2.2" ry="6.8" fill="#CBA8E8" transform="rotate(8 25 9)"/>'+
+          '<ellipse cx="20" cy="32" rx="11" ry="8" fill="#FFFDF8"/>'+
+          '<circle cx="20" cy="21" r="11" fill="#FFFDF8"/>'+
+          '<circle cx="14.5" cy="24" r="2.1" fill="#EEE1F8"/>'+
+          '<circle cx="25.5" cy="24" r="2.1" fill="#EEE1F8"/>'+
+          '<circle cx="16" cy="19" r="1.6" fill="#2A2140"/>'+
+          '<circle cx="24" cy="19" r="1.6" fill="#2A2140"/>'+
+          '<path d="M18.3 22.5 L20 24 L21.7 22.5" fill="none" stroke="#A987CC" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>'+
+        '</g>'+
+      '</svg>'
+  };
+
+  function stickerContentHtml(value){
+    if (STICKER_SVGS[value]) return STICKER_SVGS[value];
+    if (typeof value === "string" && value.indexOf("data:image") === 0){
+      return '<img src="'+value+'" alt="" style="width:100%;height:100%;object-fit:contain;">';
+    }
+    return value;
+  }
+
+  var STICKER_LIBRARY = [
+    {c:"bunny_pink", tags:"bunny rabbit pink cute animal easter"},
+    {c:"bunny_blue", tags:"bunny rabbit blue cute animal easter"},
+    {c:"bunny_mint", tags:"bunny rabbit mint green cute animal easter"},
+    {c:"bunny_carrot", tags:"bunny rabbit carrot food cute animal easter"},
+    {c:"bunny_hop", tags:"bunny rabbit jump hop purple cute animal easter"},
+    {c:"⭐", tags:"star sparkle night sky"},
+    {c:"✨", tags:"sparkle magic shiny stars"},
+    {c:"🌟", tags:"star glow sparkle shiny"},
+    {c:"💫", tags:"star dizzy sparkle swirl"},
+    {c:"🌙", tags:"moon night sky crescent"},
+    {c:"☁️", tags:"cloud sky weather"},
+    {c:"🌈", tags:"rainbow sky colors weather"},
+    {c:"☀️", tags:"sun sunny summer beach weather"},
+    {c:"❄️", tags:"snow snowflake winter cold"},
+    {c:"⛄", tags:"snowman winter snow cold"},
+    {c:"🔥", tags:"fire flame hot"},
+    {c:"💧", tags:"water drop rain tear"},
+    {c:"🌊", tags:"wave ocean sea beach water"},
+    {c:"🏖️", tags:"beach umbrella sand summer vacation ocean"},
+    {c:"🐚", tags:"shell beach ocean sea"},
+    {c:"🕶️", tags:"sunglasses beach summer cool"},
+    {c:"🍉", tags:"watermelon fruit summer food beach picnic"},
+    {c:"🌸", tags:"flower blossom cherry spring pink"},
+    {c:"🌻", tags:"flower sunflower summer yellow"},
+    {c:"🌷", tags:"flower tulip spring"},
+    {c:"🍄", tags:"mushroom forest fungus"},
+    {c:"🌳", tags:"tree forest nature green"},
+    {c:"🍁", tags:"leaf autumn fall maple"},
+    {c:"🦋", tags:"butterfly bug insect garden spring"},
+    {c:"🐝", tags:"bee bug insect honey garden"},
+    {c:"🐞", tags:"ladybug bug insect garden"},
+    {c:"🐌", tags:"snail bug slow garden"},
+    {c:"🐬", tags:"dolphin ocean sea beach animal"},
+    {c:"🐳", tags:"whale ocean sea animal"},
+    {c:"🐠", tags:"fish ocean sea beach animal"},
+    {c:"🐢", tags:"turtle ocean sea animal slow"},
+    {c:"🦀", tags:"crab beach ocean sea animal"},
+    {c:"🐶", tags:"dog puppy pet animal"},
+    {c:"🐱", tags:"cat kitten pet animal"},
+    {c:"🐻", tags:"bear animal forest"},
+    {c:"🦁", tags:"lion animal jungle"},
+    {c:"🐸", tags:"frog animal pond"},
+    {c:"🦄", tags:"unicorn magic fantasy horse"},
+    {c:"🐉", tags:"dragon fantasy magic"},
+    {c:"🦉", tags:"owl bird night animal"},
+    {c:"🐦", tags:"bird animal fly"},
+    {c:"🦖", tags:"dinosaur trex animal"},
+    {c:"🐾", tags:"paw print animal pet"},
+    {c:"🎈", tags:"balloon party celebration birthday"},
+    {c:"🎉", tags:"party confetti celebration"},
+    {c:"🎀", tags:"bow ribbon gift cute"},
+    {c:"👑", tags:"crown king queen royal princess"},
+    {c:"🍀", tags:"clover luck lucky green"},
+    {c:"🍭", tags:"lollipop candy sweet food"},
+    {c:"🍬", tags:"candy sweet food"},
+    {c:"🍩", tags:"donut sweet food"},
+    {c:"🧁", tags:"cupcake sweet food birthday"},
+    {c:"🍦", tags:"ice cream sweet food summer beach"},
+    {c:"🍕", tags:"pizza food"},
+    {c:"💛", tags:"heart yellow love"},
+    {c:"💚", tags:"heart green love"},
+    {c:"💙", tags:"heart blue love"},
+    {c:"💖", tags:"heart pink love sparkle"},
+    {c:"❤️", tags:"heart red love"},
+    {c:"💜", tags:"heart purple love"},
+    {c:"🚀", tags:"rocket space ship"},
+    {c:"🪐", tags:"planet saturn space"},
+    {c:"👽", tags:"alien space ufo"},
+    {c:"🛸", tags:"ufo space alien flying saucer"},
+    {c:"🚗", tags:"car vehicle transportation"},
+    {c:"🚲", tags:"bike bicycle transportation"},
+    {c:"✈️", tags:"airplane plane transportation fly travel"},
+    {c:"⛵", tags:"boat sailboat ocean sea beach"},
+    {c:"🎵", tags:"music note song"},
+    {c:"🎨", tags:"paint art palette"},
+    {c:"🏆", tags:"trophy winner award"},
+    {c:"🎁", tags:"gift present birthday"}
+  ];
+
+  var stickerQuery = "";
+  var CUSTOM_STICKERS_KEY = "paperTales.customStickers.v1";
+  var CUSTOM_STICKERS = [];
+
+  function loadCustomStickers(){
+    try{
+      var raw = localStorage.getItem(CUSTOM_STICKERS_KEY);
+      if (raw){ var parsed = JSON.parse(raw); if (Array.isArray(parsed)) return parsed; }
+    } catch(e){}
+    return [];
+  }
+  function saveCustomStickers(){
+    try{ localStorage.setItem(CUSTOM_STICKERS_KEY, JSON.stringify(CUSTOM_STICKERS)); } catch(e){}
+  }
+  function allStickerItems(){
+    var custom = CUSTOM_STICKERS.map(function(s){
+      return { c: s.dataUrl, tags: "my sticker custom " + (s.label||"").toLowerCase() };
+    });
+    return custom.concat(STICKER_LIBRARY);
+  }
+
+  function renderStickerResultsHtml(query){
+    var q = query.trim().toLowerCase();
+    var pool = allStickerItems();
+    var matches = q ? pool.filter(function(it){ return it.tags.indexOf(q) !== -1; }) : pool;
+    var drawBtn = '<button class="draw-sticker-btn" id="drawStickerBtn">'+ico("pencil",15)+'<span>'+(q?'Draw "'+esc(query)+'" myself':'Draw my own sticker')+'</span></button>';
+    if (!matches.length){
+      return '<p class="search-empty">No stickers found for "'+esc(query)+'". Try a different word, or draw your own!</p>' + drawBtn;
+    }
+    var heading = q ? (matches.length + " sticker" + (matches.length===1?"":"s") + " found") : "Tap to Add";
+    var btns = matches.map(function(it){
+      return '<button class="emoji-btn" data-add-sticker="'+esc(it.c)+'">'+stickerContentHtml(it.c)+'</button>';
+    }).join("");
+    return '<h4>'+heading+'</h4><div class="emoji-grid">'+btns+'</div>' + drawBtn;
+  }
+
+  var TEXT_COLORS = [
+    {name:"Ink", value:"#241C30"},
+    {name:"Berry", value:"#A6402D"},
+    {name:"Pine", value:"#1F6F63"},
+    {name:"Plum", value:"#6B4F94"},
+    {name:"Amber", value:"#A87423"}
+  ];
+
+  function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
+
+  function blankPage(bg){
+    return { id: uid(), bg: bg || "#FBF4E6", sceneEmoji: "", photo: "", text: "", stickers: [] };
+  }
+
+  function mkPage(bg, emoji, text, stickers){
+    var p = blankPage(bg);
+    p.sceneEmoji = emoji;
+    p.text = text || "";
+    p.stickers = (stickers || []).map(function(s){
+      return { id: uid(), emoji: s[0], x: s[1], y: s[2], rot: s[3] };
+    });
+    return p;
+  }
+
+  function lunaBook(){
+    return {
+      id: uid(), title: "Luna and the Marshmallow Moon", author: "by Maya P.", updatedAt: Date.now(),
+      pages: [
+        mkPage("#DCCBEE", "🌙", "", [["⭐",18,20,-8],["✨",80,16,10],["⭐",70,32,6]]),
+        mkPage("#DCCBEE", "🏡", "One night, Luna looked out her window and saw the moon. It looked soft and squishy — just like a marshmallow!", [["🦉",82,70,-6],["⭐",12,18,8]]),
+        mkPage("#C7DEF0", "🛸", "So she hopped on her cloud-kite and flew up past the twinkling stars, higher and higher, until the world below looked tiny.", [["✨",20,22,0],["☁️",78,26,-4],["🐦",60,70,10]]),
+        mkPage("#F5E6A8", "🌕", "When she landed, the moon really was made of marshmallow! Luna took one giant, gooey, wonderful bite.", [["🍭",75,66,12],["✨",22,24,-10]]),
+        mkPage("#F6D3B8", "🏡", "The End.\n\nLuna floated home, sticky and happy, already dreaming about tomorrow when she'd tell her friends everything.", [["💛",78,22,8],["🌟",16,68,-6]])
+      ]
+    };
+  }
+
+  function emberBook(){
+    return {
+      id: uid(), title: "The Dragon Who Sneezed Flowers", author: "by Zoe R.", updatedAt: Date.now(),
+      pages: [
+        mkPage("#DCCBEE", "🐉", "", [["🌸",20,18,-6],["✨",78,16,8],["🌟",70,30,6]]),
+        mkPage("#DCCBEE", "🏰", "Ember was a baby dragon who lived in a tall purple castle. Every dragon could breathe fire… except Ember, who sneezed flowers instead!", [["🌼",14,20,6],["💧",80,68,-8]]),
+        mkPage("#C3E6D2", "😳", "The other dragons giggled every time Ember sneezed. He wished more than anything that he could breathe a great big blast of fire like everyone else.", [["🌸",78,22,10],["💧",18,70,-4]]),
+        mkPage("#F6D3B8", "🔥", "One day a fire in the village kitchen grew too big to stop! Ember sneezed with all his might — and covered the flames in a giant blanket of blossoms.", [["🌺",20,24,-8],["✨",76,66,8]]),
+        mkPage("#F5E6A8", "👑", "The End.\n\nThe whole kingdom cheered for Ember, flower-breath and all. Being different, it turned out, was exactly what saved the day.", [["🌟",78,20,8],["💛",16,68,-6]])
+      ]
+    };
+  }
+
+  function fuzzbuttBook(){
+    return {
+      id: uid(), title: "Captain Fuzzbutt's Deep Sea Quest", author: "by Leo T.", updatedAt: Date.now(),
+      pages: [
+        mkPage("#C7DEF0", "🐕", "", [["⚓",18,20,-6],["✨",80,18,8],["🌟",70,32,6]]),
+        mkPage("#C7DEF0", "⛵", "Captain Fuzzbutt was the bravest pup on the seven seas. When his favorite bone sank to the bottom of the ocean, he knew exactly what to do.", [["⚓",82,70,-6],["💙",14,18,8]]),
+        mkPage("#C0E3DC", "🐬", "Down, down, down he swam in his tiny diving helmet, past a friendly dolphin and a whole rainbow of fish.", [["🐾",20,22,0],["💙",78,26,-4]]),
+        mkPage("#C3E6D2", "🐙", "A giant octopus guarded a sparkling treasure chest. Fuzzbutt shared his last snack with her, and she happily waved him through with all eight arms.", [["💜",76,64,10],["✨",22,24,-10]]),
+        mkPage("#F6D3B8", "🦴", "The End.\n\nFuzzbutt found his bone — and a chest of shiny doubloons too! He swam home a hero, tail wagging the whole way.", [["🏆",78,22,8],["💛",16,68,-6]])
+      ]
+    };
+  }
+
+  function beepbopBook(){
+    return {
+      id: uid(), title: "The Robot Who Learned to Dance", author: "by Sam K.", updatedAt: Date.now(),
+      pages: [
+        mkPage("#F5E6A8", "🤖", "", [["✨",18,20,-6],["🎈",80,18,8],["🌟",70,32,6]]),
+        mkPage("#F5E6A8", "🎪", "Beep-Bop the robot loved the Spring Festival — the music, the lights, the dancing. There was just one problem: Beep-Bop didn't know how to dance at all.", [["🎈",82,68,-6],["✨",14,18,8]]),
+        mkPage("#F3CBDA", "🌟", "He watched his feet clank left, right, left, right. Nothing about it felt like dancing. Beep-Bop sat down, feeling very left out.", [["💧",78,24,10],["🌙",18,70,-4]]),
+        mkPage("#C0E3DC", "🐞", "A tiny firefly named Blink landed on his shoulder and started blinking in a steady rhythm: blink-blink-pause, blink-blink-pause.", [["✨",20,22,-8],["💫",76,66,8]]),
+        mkPage("#F3CBDA", "🎉", "The End.\n\nBeep-Bop followed the blinking beat — clank, clank, PAUSE! — and danced better than anyone at the festival. Turns out he just needed his own rhythm.", [["🎀",78,20,8],["💛",16,68,-6]])
+      ]
+    };
+  }
+
+  function sampleBooks(){
+    return [lunaBook(), emberBook(), fuzzbuttBook(), beepbopBook()];
+  }
+
+  var state = {
+    books: [],
+    view: "gallery",
+    currentBookId: null,
+    currentPageIndex: 0,
+    activeTab: "scene",
+    selectedStickerId: null,
+    pendingDelete: null
+  };
+
+  function loadBooks(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw){
+        var parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length) return parsed;
+      }
+    } catch(e){}
+    return sampleBooks();
+  }
+
+  var saveTimer = null;
+  function saveBooks(immediate){
+    clearTimeout(saveTimer);
+    var run = function(){
+      try{
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.books));
+        flashSaved();
+      } catch(e){
+        showToast("We ran out of space to save! Try removing a photo or making it smaller.");
+      }
+    };
+    if (immediate) run(); else saveTimer = setTimeout(run, 500);
+  }
+
+  function currentBook(){
+    for (var i=0;i<state.books.length;i++) if (state.books[i].id === state.currentBookId) return state.books[i];
+    return null;
+  }
+  function currentPage(){
+    var b = currentBook();
+    if (!b) return null;
+    return b.pages[state.currentPageIndex] || b.pages[0];
+  }
+
+  function flashSaved(){
+    var el = document.getElementById("savePill");
+    if (!el) return;
+    el.textContent = "Saved";
+  }
+
+  /* ---------------- undo ---------------- */
+
+  var UNDO_LIMIT = 30;
+  var undoStack = [];
+
+  function resetUndo(){
+    undoStack = [];
+    refreshUndoBtn();
+  }
+
+  function snapshotBook(){
+    var b = currentBook();
+    if (!b) return;
+    undoStack.push(JSON.parse(JSON.stringify(b)));
+    if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+    refreshUndoBtn();
+  }
+
+  function refreshUndoBtn(){
+    var btn = document.getElementById("undoBtn");
+    if (!btn) return;
+    btn.disabled = undoStack.length === 0;
+  }
+
+  function doUndo(){
+    if (!undoStack.length){ showToast("Nothing to undo yet."); return; }
+    var prev = undoStack.pop();
+    var idx = -1;
+    for (var i=0;i<state.books.length;i++) if (state.books[i].id === prev.id) { idx = i; break; }
+    if (idx === -1) return;
+    state.books[idx] = prev;
+    state.currentPageIndex = Math.min(state.currentPageIndex, prev.pages.length - 1);
+    state.selectedStickerId = null;
+    saveBooks(true);
+    renderEditor();
+    showToast("Undone.");
+  }
+
+  document.addEventListener("keydown", function(e){
+    var mod = e.metaKey || e.ctrlKey;
+    if (!mod || e.shiftKey || e.key.toLowerCase() !== "z") return;
+    if (state.view !== "editor") return;
+    var tag = document.activeElement ? document.activeElement.tagName : "";
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+    e.preventDefault();
+    doUndo();
+  });
+
+  function showToast(msg){
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function(){ t.classList.remove("show"); }, 2600);
+  }
+
+  /* ---------------- rendering ---------------- */
+
+  var app = document.getElementById("app");
+
+  function render(){
+    if (state.view === "gallery") renderGallery();
+    else renderEditor();
+  }
+
+  function esc(s){
+    return (s||"").replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  var PHOTO_ZOOM_MIN = 1, PHOTO_ZOOM_MAX = 2.5, PHOTO_ZOOM_STEP = 0.2;
+
+  function photoObjPos(page){
+    var y = (typeof page.photoY === "number") ? page.photoY : 50;
+    return "center " + y + "%";
+  }
+  function photoScale(page){
+    return (typeof page.photoScale === "number") ? page.photoScale : 1;
+  }
+
+  function sceneFillHtml(page, altText){
+    if (page.photo){
+      return '<img class="scene-photo" src="'+page.photo+'" alt="'+esc(altText)+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:'+photoObjPos(page)+';transform:scale('+photoScale(page)+');">';
+    }
+    return '<span class="scene" style="transform:scale('+photoScale(page)+');">'+(page.sceneEmoji || "📖")+"</span>";
+  }
+
+  function renderGallery(){
+    var cards = state.books.map(function(b){
+      var cover = b.pages[0] || {};
+      var sceneHtml = sceneFillHtml(cover, "Cover photo for "+(b.title||"this book"));
+      return (
+        '<div class="book-card" data-open="'+b.id+'" tabindex="0" role="button" aria-label="Open '+esc(b.title)+'">'+
+          '<div class="book-menu">'+
+            '<button class="mini-icon-btn" data-dup="'+b.id+'" title="Make a copy of this book" aria-label="Make a copy of this book">'+ico("copy",15)+'</button>'+
+            '<button class="mini-icon-btn danger" data-del="'+b.id+'" title="Delete this book" aria-label="Delete this book">'+ico("trash",15)+'</button>'+
+          '</div>'+
+          '<div class="stack-edge se2"></div>'+
+          '<div class="stack-edge se1"></div>'+
+          '<div class="cover-face">'+
+            '<div class="book-cover" style="background:'+cover.bg+'">'+sceneHtml+'</div>'+
+            '<div class="book-foot">'+
+              '<div class="book-title">'+esc(b.title || "Untitled Book")+'</div>'+
+              '<div class="book-author">'+esc(b.author || "by You")+'</div>'+
+              '<div class="book-pages">'+b.pages.length+' page'+(b.pages.length===1?'':'s')+'</div>'+
+            '</div>'+
+          '</div>'+
+        '</div>'
+      );
+    }).join("");
+
+    var emptyMsg = state.books.length === 0
+      ? '<div class="empty-shelf">'+ico("book",42)+'<p>Your bookshelf is empty! Tap "Start a New Book" below and write your very first story.</p></div>'
+      : '';
+
+    var featured = state.books[0];
+    var featuredCover = featured ? (featured.pages[0] || {}) : null;
+    var heroMockupHtml = featured
+      ? (
+          '<div class="book-mockup hero-mockup">'+
+            '<div class="ground-shadow"></div>'+
+            '<div class="stack-edge se2"></div>'+
+            '<div class="stack-edge se1"></div>'+
+            '<div class="cover-face" style="background:'+featuredCover.bg+'">'+
+              '<div class="book-cover" style="flex:1;background:transparent;">'+sceneFillHtml(featuredCover, "Cover of "+(featured.title||"your book"))+'</div>'+
+              '<div style="padding:12px 16px 16px;text-align:center;">'+
+                '<div style="font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--ink);line-height:1.2;">'+esc(featured.title||"Untitled Book")+'</div>'+
+                '<div style="font-family:var(--font-hand);font-size:1.05rem;color:var(--ink-soft);">'+esc(featured.author||"by You")+'</div>'+
+              '</div>'+
+            '</div>'+
+          '</div>'
+        )
+      : '';
+
+    app.innerHTML =
+      '<header class="wrap topline">'+
+        '<div class="brand">'+
+          '<div class="brand-logo">'+MAGIC_PEN_LOGO_SVG+'</div>'+
+          '<div class="brand-text">'+
+            '<h1 class="brand-name">Magic Pen</h1>'+
+            '<p class="brand-tagline">A little publishing house for big imaginations</p>'+
+          '</div>'+
+        '</div>'+
+      '</header>'+
+      '<div class="wrap gallery-hero">'+
+        '<div class="gallery-hero-copy">'+
+          '<h2>Write a story. Add pictures.<br><em>Hold it in your hands.</em></h2>'+
+          '<p>This is your own little library, saved right here on this device. Dream up anything — a pet\'s secret life, a trip to outer space, a silly adventure with your best friend. Decorate every page, then print your finished book at CVS Photo and hold your very own story.</p>'+
+          '<button class="btn btn-primary" id="heroNewBtn">'+ico("plus",18)+'<span>Start a New Book</span></button>'+
+          '<div class="hero-badges">'+
+            '<span class="hero-badge">'+ico("check",15)+'No account needed</span>'+
+            '<span class="hero-badge">'+ico("check",15)+'Saves automatically</span>'+
+            '<span class="hero-badge">'+ico("check",15)+'Ready to print at CVS</span>'+
+          '</div>'+
+        '</div>'+
+        '<div class="gallery-hero-art">'+heroMockupHtml+'</div>'+
+      '</div>'+
+      '<div class="wrap how-section">'+
+        '<h2>How It Works</h2>'+
+        '<div class="how-grid">'+
+          '<div class="how-step"><div class="num">1</div><h3>Write Your Story</h3><p>Give your book a title, then type your story onto each page. It can be true, silly, or totally made up — the choice is yours.</p></div>'+
+          '<div class="how-step"><div class="num">2</div><h3>Make It Yours</h3><p>Add a photo or a fun scene, sprinkle stickers wherever you like, and pick colors for your paper and words.</p></div>'+
+          '<div class="how-step"><div class="num">3</div><h3>Print &amp; Share</h3><p>Save your finished book as a PDF, then upload it to CVS Photo\'s Document Printing service to print real pages you can hold.</p></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="wrap shelf-head"><h2>Your Bookshelf</h2></div>'+
+      '<div class="wrap shelf">'+
+        emptyMsg + cards+
+        '<div class="new-book-card" id="newBookCard" tabindex="0" role="button" aria-label="Start a new book">'+
+          '<div class="plus-circle">'+ico("plus",22)+'</div><span>Start a New Book</span>'+
+        '</div>'+
+      '</div>';
+
+    document.getElementById("heroNewBtn").onclick = createNewBook;
+    document.getElementById("newBookCard").onclick = createNewBook;
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-open]"), function(el){
+      el.addEventListener("click", function(e){
+        if (e.target.closest("[data-dup]") || e.target.closest("[data-del]")) return;
+        openBook(el.getAttribute("data-open"));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-dup]"), function(el){
+      el.addEventListener("click", function(e){ e.stopPropagation(); duplicateBook(el.getAttribute("data-dup")); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-del]"), function(el){
+      el.addEventListener("click", function(e){ e.stopPropagation(); confirmDeleteBook(el.getAttribute("data-del")); });
+    });
+  }
+
+  function createNewBook(){
+    var b = {
+      id: uid(), title: "My New Book", author: "", updatedAt: Date.now(),
+      pages: [blankPage("#C7DEF0"), blankPage("#F5E6A8"), blankPage("#F6D3B8")]
+    };
+    state.books.unshift(b);
+    saveBooks(true);
+    openBook(b.id);
+  }
+
+  function duplicateBook(id){
+    var b = state.books.filter(function(x){return x.id===id;})[0];
+    if (!b) return;
+    var copy = JSON.parse(JSON.stringify(b));
+    copy.id = uid();
+    copy.title = b.title + " (Copy)";
+    copy.pages.forEach(function(p){
+      p.id = uid();
+      p.stickers.forEach(function(s){ s.id = uid(); });
+    });
+    var idx = state.books.indexOf(b);
+    state.books.splice(idx+1, 0, copy);
+    saveBooks(true);
+    render();
+    showToast("Copied! Your new book is ready to edit.");
+  }
+
+  function confirmDeleteBook(id){
+    var b = state.books.filter(function(x){return x.id===id;})[0];
+    if (!b) return;
+    showModal({
+      icon: "trash",
+      title: "Throw away this book?",
+      body: 'Once you delete "'+ (b.title || "Untitled Book") +'", it\'s gone for good and can\'t be brought back. Are you sure?',
+      confirmLabel: "Yes, delete it",
+      confirmClass: "btn-danger",
+      onConfirm: function(){
+        state.books = state.books.filter(function(x){ return x.id !== id; });
+        saveBooks(true);
+        render();
+        showToast("Book deleted.");
+      }
+    });
+  }
+
+  function openBook(id){
+    state.currentBookId = id;
+    state.currentPageIndex = 0;
+    state.view = "editor";
+    state.activeTab = "scene";
+    state.selectedStickerId = null;
+    resetUndo();
+    render();
+  }
+
+  function closeEditor(){
+    saveBooks(true);
+    state.view = "gallery";
+    state.currentBookId = null;
+    render();
+  }
+
+  /* ---------------- editor ---------------- */
+
+  function renderEditor(){
+    var book = currentBook();
+    if (!book){ state.view = "gallery"; render(); return; }
+    var page = book.pages[state.currentPageIndex];
+
+    var stripHtml = book.pages.map(function(p, i){
+      var isCover = i === 0;
+      var content = p.photo
+        ? '<img src="'+p.photo+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">'
+        : (p.sceneEmoji || "");
+      return (
+        '<div class="page-thumb'+(isCover?' cover-thumb':'')+(i===state.currentPageIndex?' active':'')+'" '+
+          'style="background:'+p.bg+'" data-page="'+i+'">'+content+
+          '<span class="pnum">'+(i+1)+'</span>'+
+        '</div>'
+      );
+    }).join("");
+
+    app.innerHTML =
+      '<div class="editor">'+
+        '<div class="wrap editor-top">'+
+          '<button class="btn-icon" id="backBtn" title="Back to your bookshelf" aria-label="Back to your bookshelf">'+ico("chevronLeft",18)+'</button>'+
+          '<input class="title-field" id="titleField" value="'+esc(book.title)+'" placeholder="Give your book a title" maxlength="70" aria-label="Book title">'+
+          '<span class="save-pill" id="savePill"><span class="dot"></span>Saved</span>'+
+          '<button class="btn-icon" id="undoBtn" title="Undo the last change" aria-label="Undo the last change">'+ico("undo",18)+'</button>'+
+          '<button class="btn btn-outline" id="previewBtn">'+ico("bookOpen",17)+'<span>Preview</span></button>'+
+          '<button class="btn btn-outline" id="exportPdfBtn">'+ico("filePdf",17)+'<span>Export PDF</span></button>'+
+          '<button class="btn btn-outline" id="printBtn">'+ico("printer",17)+'<span>Print Book</span></button>'+
+        '</div>'+
+        '<div class="wrap page-strip" id="pageStrip">'+
+          stripHtml+
+          '<button class="add-page-btn" id="addPageBtn" title="Add a new page" aria-label="Add a new page">'+ico("plus",18)+'</button>'+
+        '</div>'+
+        '<div class="wrap editor-main">'+
+          '<div class="canvas-col">'+
+            '<div class="page-toolbar">'+
+              '<button class="btn-icon" id="movePageLeft" title="Move this page earlier in the book" aria-label="Move this page earlier">'+ico("chevronLeft",16)+'</button>'+
+              (state.currentPageIndex===0
+                ? '<span class="label">Cover Page</span>'
+                : '<button class="btn-icon" id="deletePageBtn" title="Delete this page" aria-label="Delete this page">'+ico("trash",16)+'</button>'
+              )+
+              '<button class="btn-icon" id="movePageRight" title="Move this page later in the book" aria-label="Move this page later">'+ico("chevronRight",16)+'</button>'+
+            '</div>'+
+            '<div class="canvas-shell"><div class="page-canvas" id="pageCanvas" style="background:'+page.bg+'"></div></div>'+
+            '<div class="canvas-hint">Tap and drag a sticker to move it. Tap it once more to find its little trash button.</div>'+
+          '</div>'+
+          '<div class="tray">'+renderTrayHtml()+'</div>'+
+        '</div>'+
+      '</div>';
+
+    document.getElementById("backBtn").onclick = closeEditor;
+    document.getElementById("printBtn").onclick = doPrint;
+    document.getElementById("previewBtn").onclick = openPreview;
+    document.getElementById("exportPdfBtn").onclick = exportPdf;
+    document.getElementById("undoBtn").onclick = doUndo;
+    refreshUndoBtn();
+    document.getElementById("addPageBtn").onclick = addPage;
+    document.getElementById("movePageLeft").onclick = function(){ movePage(-1); };
+    document.getElementById("movePageRight").onclick = function(){ movePage(1); };
+    var delBtn = document.getElementById("deletePageBtn");
+    if (delBtn) delBtn.onclick = function(){ deletePage(state.currentPageIndex); };
+
+    var titleField = document.getElementById("titleField");
+    titleField.addEventListener("focus", function(){ snapshotBook(); }, { once: true });
+    titleField.addEventListener("input", function(){
+      book.title = titleField.value;
+      book.updatedAt = Date.now();
+      markUnsaved();
+      saveBooks();
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-page]"), function(el){
+      el.addEventListener("click", function(){
+        state.currentPageIndex = parseInt(el.getAttribute("data-page"), 10);
+        state.selectedStickerId = null;
+        renderEditor();
+      });
+    });
+
+    renderCanvas();
+    bindTrayEvents();
+  }
+
+  function markUnsaved(){
+    var el = document.getElementById("savePill");
+    if (el) el.textContent = "Saving…";
+  }
+
+  function addPage(){
+    var book = currentBook();
+    snapshotBook();
+    book.pages.push(blankPage(BG_COLORS[(book.pages.length) % BG_COLORS.length].value));
+    state.currentPageIndex = book.pages.length - 1;
+    saveBooks(true);
+    renderEditor();
+  }
+
+  function deletePage(idx){
+    var book = currentBook();
+    if (book.pages.length <= 2){ showToast("Every book needs at least a cover and one story page!"); return; }
+    if (idx === 0) return;
+    snapshotBook();
+    book.pages.splice(idx, 1);
+    state.currentPageIndex = Math.max(0, idx - 1);
+    saveBooks(true);
+    renderEditor();
+  }
+
+  function movePage(dir){
+    var book = currentBook();
+    var i = state.currentPageIndex;
+    var j = i + dir;
+    if (i === 0 || j === 0 || j < 0 || j >= book.pages.length) return;
+    snapshotBook();
+    var tmp = book.pages[i]; book.pages[i] = book.pages[j]; book.pages[j] = tmp;
+    state.currentPageIndex = j;
+    saveBooks(true);
+    renderEditor();
+  }
+
+  /* ---- canvas (page art) ---- */
+
+  function renderCanvas(){
+    var book = currentBook();
+    var page = currentPage();
+    var isCover = state.currentPageIndex === 0;
+    var canvasEl = document.getElementById("pageCanvas");
+    canvasEl.style.background = page.bg;
+
+    var sceneInner = page.photo
+      ? '<img class="scene-photo" id="scenePhoto" draggable="false" src="'+page.photo+'" alt="A photo you added to this page" style="object-position:'+photoObjPos(page)+';transform:scale('+photoScale(page)+');">'+
+        '<div class="photo-hint">'+ico("moveVertical",14)+'Drag to reposition</div>'
+      : (page.sceneEmoji
+          ? '<span class="scene-emoji" id="sceneEmojiEl" style="transform:scale('+photoScale(page)+');">'+page.sceneEmoji+'</span>'
+          : '<div class="scene-empty">'+ico("image",22)+'This page needs a picture!<br>Open the Scene tab to add one.</div>');
+
+    var stickerHtml = page.stickers.map(function(s){
+      var sel = s.id === state.selectedStickerId;
+      return (
+        '<div class="sticker" data-sticker="'+s.id+'" style="left:'+s.x+'%;top:'+s.y+'%;transform:translate(-50%,-50%) rotate('+s.rot+'deg) scale('+(sel?1.12:1)+');">'+
+          stickerContentHtml(s.emoji)+
+          (sel ? '<div class="sticker-del" data-del-sticker="'+s.id+'">✕</div>' : '')+
+        '</div>'
+      );
+    }).join("");
+
+    if (isCover){
+      canvasEl.innerHTML =
+        '<div class="scene-zone" style="flex:0 0 46%;">'+sceneInner+'</div>'+
+        '<div class="cover-zone">'+
+          '<input class="cover-title-input" id="coverTitleInput" placeholder="What\'s Your Book Called?" maxlength="70" value="'+esc(book.title)+'" aria-label="Book title">'+
+          '<div class="cover-by">written by</div>'+
+          '<input class="cover-author-input" id="coverAuthorInput" placeholder="Type Your Name" maxlength="40" value="'+esc(book.author)+'" aria-label="Author name">'+
+        '</div>'+
+        '<div class="sticker-layer">'+stickerHtml+'</div>';
+
+      var ct = document.getElementById("coverTitleInput");
+      ct.addEventListener("focus", function(){ snapshotBook(); }, { once: true });
+      ct.addEventListener("input", function(){
+        book.title = ct.value;
+        var tf = document.getElementById("titleField");
+        if (tf) tf.value = ct.value;
+        saveBooks();
+      });
+      var ca = document.getElementById("coverAuthorInput");
+      ca.addEventListener("focus", function(){ snapshotBook(); }, { once: true });
+      ca.addEventListener("input", function(){ book.author = ca.value; saveBooks(); });
+    } else {
+      canvasEl.innerHTML =
+        '<div class="scene-zone">'+sceneInner+'</div>'+
+        '<div class="text-zone">'+
+          '<textarea class="story-text fs-'+(page.fontSize||'md')+'" id="storyText" placeholder="Once upon a time… what happens on this page?" maxlength="600" aria-label="Story text for this page" style="color:'+(page.textColor||'#241C30')+'">'+esc(page.text)+'</textarea>'+
+        '</div>'+
+        '<div class="sticker-layer">'+stickerHtml+'</div>';
+
+      var st = document.getElementById("storyText");
+      st.addEventListener("focus", function(){ snapshotBook(); }, { once: true });
+      st.addEventListener("input", function(){ page.text = st.value; saveBooks(); });
+    }
+
+    bindStickerDrag(canvasEl, page);
+    bindPhotoDrag(canvasEl, page);
+
+    Array.prototype.forEach.call(canvasEl.querySelectorAll("[data-del-sticker]"), function(el){
+      // Stop pointerdown/up from reaching the parent .sticker's drag handlers —
+      // otherwise its own pointerup fires first, deselects, and re-renders the
+      // canvas before this button's click can run, so the delete never happens.
+      el.addEventListener("pointerdown", function(e){ e.stopPropagation(); });
+      el.addEventListener("pointerup", function(e){ e.stopPropagation(); });
+      el.addEventListener("click", function(e){
+        e.stopPropagation();
+        snapshotBook();
+        page.stickers = page.stickers.filter(function(s){ return s.id !== el.getAttribute("data-del-sticker"); });
+        state.selectedStickerId = null;
+        saveBooks(true);
+        renderCanvas();
+        renderPageStripThumb();
+      });
+    });
+  }
+
+  function renderPageStripThumb(){
+    var strip = document.getElementById("pageStrip");
+    if (!strip) return;
+    var book = currentBook();
+    var el = strip.querySelector('[data-page="'+state.currentPageIndex+'"]');
+    if (!el) return;
+    var p = book.pages[state.currentPageIndex];
+    el.style.background = p.bg;
+    el.innerHTML = (p.photo ? '<img src="'+p.photo+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">' : (p.sceneEmoji||"")) + '<span class="pnum">'+(state.currentPageIndex+1)+'</span>';
+  }
+
+  function bindStickerDrag(canvasEl, page){
+    var dragId = null, moved = false, rect = null;
+
+    canvasEl.querySelectorAll(".sticker").forEach(function(el){
+      el.addEventListener("pointerdown", function(e){
+        e.stopPropagation();
+        dragId = el.getAttribute("data-sticker");
+        moved = false;
+        rect = canvasEl.getBoundingClientRect();
+        el.setPointerCapture(e.pointerId);
+      });
+      el.addEventListener("pointermove", function(e){
+        if (!dragId || el.getAttribute("data-sticker") !== dragId) return;
+        if (!(e.buttons & 1) && e.pointerType === "mouse") return;
+        moved = true;
+        var x = ((e.clientX - rect.left) / rect.width) * 100;
+        var y = ((e.clientY - rect.top) / rect.height) * 100;
+        x = Math.max(4, Math.min(96, x));
+        y = Math.max(4, Math.min(96, y));
+        el.style.left = x + "%";
+        el.style.top = y + "%";
+        el._pendingX = x; el._pendingY = y;
+      });
+      el.addEventListener("pointerup", function(e){
+        if (dragId !== el.getAttribute("data-sticker")) return;
+        if (moved && el._pendingX != null){
+          var s = page.stickers.filter(function(s){return s.id===dragId;})[0];
+          if (s){ snapshotBook(); s.x = el._pendingX; s.y = el._pendingY; }
+          saveBooks(true);
+        } else {
+          state.selectedStickerId = (state.selectedStickerId === dragId) ? null : dragId;
+          renderCanvas();
+        }
+        dragId = null; moved = false;
+      });
+    });
+
+    canvasEl.addEventListener("click", function(e){
+      if (e.target === canvasEl || e.target.closest(".scene-zone") && !e.target.closest(".sticker")){
+        if (state.selectedStickerId){ state.selectedStickerId = null; renderCanvas(); }
+      }
+    });
+  }
+
+  function bindPhotoDrag(canvasEl, page){
+    var img = canvasEl.querySelector("#scenePhoto");
+    if (!img) return;
+    var zone = img.parentElement;
+    var dragging = false, moved = false, startY = 0, startPos = 50, zoneH = 0, pendingY = null;
+
+    img.addEventListener("dragstart", function(e){ e.preventDefault(); });
+    img.addEventListener("pointerdown", function(e){
+      e.stopPropagation();
+      dragging = true; moved = false;
+      startY = e.clientY;
+      startPos = (typeof page.photoY === "number") ? page.photoY : 50;
+      zoneH = zone.getBoundingClientRect().height || 1;
+      img.setPointerCapture(e.pointerId);
+    });
+    img.addEventListener("pointermove", function(e){
+      if (!dragging) return;
+      if (!(e.buttons & 1) && e.pointerType === "mouse") return;
+      var dy = e.clientY - startY;
+      if (Math.abs(dy) > 2) moved = true;
+      var newPos = Math.max(0, Math.min(100, startPos - (dy / zoneH) * 100));
+      pendingY = newPos;
+      img.style.objectPosition = "center " + newPos + "%";
+    });
+    img.addEventListener("pointerup", function(e){
+      if (!dragging) return;
+      dragging = false;
+      if (moved && pendingY != null){
+        snapshotBook();
+        page.photoY = pendingY;
+        saveBooks(true);
+        renderPageStripThumb();
+      }
+      moved = false; pendingY = null;
+    });
+  }
+
+  /* ---- tool tray ---- */
+
+  function renderTrayHtml(){
+    var tabs = [
+      {id:"scene", icon:ico("image",18), label:"Scene"},
+      {id:"stickers", icon:ico("star",18), label:"Stickers"},
+      {id:"colors", icon:ico("palette",18), label:"Paper"},
+      {id:"text", icon:'<span style="font-family:var(--font-display);font-weight:700;font-size:1rem;">Aa</span>', label:"Text"}
+    ];
+    var tabsHtml = tabs.map(function(t){
+      return '<button class="tray-tab'+(state.activeTab===t.id?' active':'')+'" data-tab="'+t.id+'">'+t.icon+t.label+'</button>';
+    }).join("");
+
+    return '<div class="tray-card"><div class="tray-tabs">'+tabsHtml+'</div><div class="tray-body" id="trayBody">'+renderTrayBody()+
+      '</div><div class="tray-foot">'+ico("info",15)+'<span>When your book is finished, tap <strong>Export PDF</strong> to get a ready-to-upload PDF file — then send it to CVS Photo\'s Document Printing service to print real pages!</span></div></div>';
+  }
+
+  function renderTrayBody(){
+    var page = currentPage();
+    var isCover = state.currentPageIndex === 0;
+
+    if (state.activeTab === "scene"){
+      var groupsHtml = SCENE_GROUPS.map(function(g){
+        var btns = g.emojis.map(function(em){
+          return '<button class="emoji-btn" data-scene-emoji="'+em+'">'+em+'</button>';
+        }).join("");
+        return '<div class="tray-section"><h4>'+g.label+'</h4><div class="emoji-grid">'+btns+'</div></div>';
+      }).join("");
+      var removeBtn = (page.photo || page.sceneEmoji) ? '<button class="remove-photo" id="clearScene">Clear picture</button>' : '';
+      var zoomSection = (page.photo || page.sceneEmoji) ? (
+        '<div class="tray-section"><h4>Picture Size</h4>'+
+          '<div class="zoom-row">'+
+            '<button class="zoom-btn" data-zoom="out"'+(photoScale(page)<=PHOTO_ZOOM_MIN?' disabled':'')+' aria-label="Make picture smaller">'+ico("zoomOut",16)+'</button>'+
+            '<span class="zoom-pct">'+Math.round(photoScale(page)*100)+'%</span>'+
+            '<button class="zoom-btn" data-zoom="in"'+(photoScale(page)>=PHOTO_ZOOM_MAX?' disabled':'')+' aria-label="Make picture bigger">'+ico("zoomIn",16)+'</button>'+
+          '</div>'+
+        '</div>'
+      ) : '';
+      return (
+        '<p class="tray-lead">Every good story needs a picture! Choose one that matches what\'s happening on this page, or upload a photo of your own.</p>'+
+        '<div class="tray-section"><h4>Your Own Photo</h4>'+
+          '<button class="upload-btn" id="uploadPhotoBtn">'+ico("upload",16)+'<span>Upload a Photo</span></button>'+
+          removeBtn+
+        '</div>'+ zoomSection + groupsHtml
+      );
+    }
+
+    if (state.activeTab === "stickers"){
+      return (
+        '<p class="tray-lead">Search for a sticker, or just tap one below to add it to your page!</p>'+
+        '<div class="sticker-search">'+ico("search",16)+
+          '<input type="search" id="stickerSearchInput" placeholder="Try &quot;butterfly&quot; or &quot;beach&quot;…" value="'+esc(stickerQuery)+'" aria-label="Search stickers">'+
+        '</div>'+
+        '<div class="tray-section" id="stickerResults">'+renderStickerResultsHtml(stickerQuery)+'</div>'
+      );
+    }
+
+    if (state.activeTab === "colors"){
+      var swatches = BG_COLORS.map(function(c){
+        return '<button class="swatch'+(page.bg===c.value?' active':'')+'" style="background:'+c.value+'" data-bg="'+c.value+'" title="'+c.name+'" aria-label="'+c.name+' paper"></button>';
+      }).join("");
+      return (
+        '<p class="tray-lead">This is the color of your page. Pick your favorite, or try a different one on every page!</p>'+
+        '<div class="tray-section"><h4>Page Color</h4><div class="swatch-grid">'+swatches+'</div></div>'
+      );
+    }
+
+    if (state.activeTab === "text"){
+      if (isCover){
+        return '<p class="tray-lead">The cover just shows your title and your name, written nice and big. You can change the picture in the Scene tab. Style options for your words will show up once you\'re on a story page.</p>';
+      }
+      var sizes = [{k:"sm",l:"A",c:"sz1"},{k:"md",l:"A",c:"sz2"},{k:"lg",l:"A",c:"sz3"}];
+      var sizeHtml = sizes.map(function(s){
+        return '<button class="size-btn '+s.c+(((page.fontSize||"md")===s.k)?' active':'')+'" data-fontsize="'+s.k+'">'+s.l+'</button>';
+      }).join("");
+      var colorHtml = TEXT_COLORS.map(function(c){
+        return '<button class="color-dot'+(((page.textColor||"#241C30")===c.value)?' active':'')+'" style="background:'+c.value+'" data-textcolor="'+c.value+'" title="'+c.name+'" aria-label="'+c.name+' text color"></button>';
+      }).join("");
+      return (
+        '<p class="tray-lead">Make your words easy to read. Choose how big they are and what color looks best on your page.</p>'+
+        '<div class="tray-section"><h4>Text Size</h4><div class="size-row">'+sizeHtml+'</div></div>'+
+        '<div class="tray-section"><h4>Text Color</h4><div class="color-row">'+colorHtml+'</div></div>'
+      );
+    }
+    return "";
+  }
+
+  function bindTrayEvents(){
+    Array.prototype.forEach.call(document.querySelectorAll("[data-tab]"), function(el){
+      el.addEventListener("click", function(){
+        state.activeTab = el.getAttribute("data-tab");
+        document.getElementById("trayBody").innerHTML = renderTrayBody();
+        refreshTrayTabs();
+        bindTrayBodyEvents();
+      });
+    });
+    bindTrayBodyEvents();
+  }
+
+  function refreshTrayTabs(){
+    Array.prototype.forEach.call(document.querySelectorAll(".tray-tab"), function(el){
+      el.classList.toggle("active", el.getAttribute("data-tab") === state.activeTab);
+    });
+  }
+
+  function bindStickerAddButtons(container, page){
+    Array.prototype.forEach.call(container.querySelectorAll("[data-add-sticker]"), function(el){
+      el.addEventListener("click", function(){
+        snapshotBook();
+        var em = el.getAttribute("data-add-sticker");
+        page.stickers.push({
+          id: uid(), emoji: em,
+          x: 40 + Math.random()*20, y: 40 + Math.random()*20,
+          rot: Math.round(Math.random()*30 - 15)
+        });
+        saveBooks(true); renderCanvas();
+      });
+    });
+    var drawBtn = container.querySelector("#drawStickerBtn");
+    if (drawBtn) drawBtn.onclick = function(){ openStickerDrawPanel(page, stickerQuery); };
+  }
+
+  function bindTrayBodyEvents(){
+    var page = currentPage();
+
+    var uploadBtn = document.getElementById("uploadPhotoBtn");
+    if (uploadBtn) uploadBtn.onclick = function(){ ensureFileInput().click(); };
+
+    var clearScene = document.getElementById("clearScene");
+    if (clearScene) clearScene.onclick = function(){
+      snapshotBook();
+      page.sceneEmoji = ""; page.photo = "";
+      saveBooks(true); renderCanvas(); renderPageStripThumb();
+      document.getElementById("trayBody").innerHTML = renderTrayBody();
+      bindTrayBodyEvents();
+    };
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-zoom]"), function(el){
+      el.addEventListener("click", function(){
+        var cur = photoScale(page);
+        var dir = el.getAttribute("data-zoom");
+        var next = dir === "in" ? cur + PHOTO_ZOOM_STEP : cur - PHOTO_ZOOM_STEP;
+        next = Math.round(Math.max(PHOTO_ZOOM_MIN, Math.min(PHOTO_ZOOM_MAX, next)) * 100) / 100;
+        if (next === cur) return;
+        snapshotBook();
+        page.photoScale = next;
+        saveBooks(true);
+        var photoEl = document.getElementById("scenePhoto") || document.getElementById("sceneEmojiEl");
+        if (photoEl) photoEl.style.transform = "scale(" + next + ")";
+        renderPageStripThumb();
+        document.getElementById("trayBody").innerHTML = renderTrayBody();
+        bindTrayBodyEvents();
+      });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-scene-emoji]"), function(el){
+      el.addEventListener("click", function(){
+        snapshotBook();
+        page.sceneEmoji = el.getAttribute("data-scene-emoji");
+        page.photo = "";
+        page.photoScale = 1;
+        saveBooks(true); renderCanvas(); renderPageStripThumb();
+        document.getElementById("trayBody").innerHTML = renderTrayBody();
+        bindTrayBodyEvents();
+      });
+    });
+
+    var stickerResultsEl = document.getElementById("stickerResults");
+    if (stickerResultsEl) bindStickerAddButtons(stickerResultsEl, page);
+
+    var stickerSearchInput = document.getElementById("stickerSearchInput");
+    if (stickerSearchInput){
+      stickerSearchInput.addEventListener("input", function(){
+        stickerQuery = stickerSearchInput.value;
+        var resultsEl = document.getElementById("stickerResults");
+        resultsEl.innerHTML = renderStickerResultsHtml(stickerQuery);
+        bindStickerAddButtons(resultsEl, page);
+      });
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-bg]"), function(el){
+      el.addEventListener("click", function(){
+        snapshotBook();
+        page.bg = el.getAttribute("data-bg");
+        saveBooks(true);
+        document.getElementById("pageCanvas").style.background = page.bg;
+        renderPageStripThumb();
+        document.getElementById("trayBody").innerHTML = renderTrayBody();
+        bindTrayBodyEvents();
+      });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-fontsize]"), function(el){
+      el.addEventListener("click", function(){
+        snapshotBook();
+        page.fontSize = el.getAttribute("data-fontsize");
+        saveBooks(true);
+        var st = document.getElementById("storyText");
+        if (st){ st.className = "story-text fs-" + page.fontSize; }
+        document.getElementById("trayBody").innerHTML = renderTrayBody();
+        bindTrayBodyEvents();
+      });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-textcolor]"), function(el){
+      el.addEventListener("click", function(){
+        snapshotBook();
+        page.textColor = el.getAttribute("data-textcolor");
+        saveBooks(true);
+        var st = document.getElementById("storyText");
+        if (st){ st.style.color = page.textColor; }
+        document.getElementById("trayBody").innerHTML = renderTrayBody();
+        bindTrayBodyEvents();
+      });
+    });
+  }
+
+  function ensureFileInput(){
+    if (fileInput) return fileInput;
+    fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/*";
+    fileInput.style.display = "none";
+    document.body.appendChild(fileInput);
+    fileInput.addEventListener("change", function(){
+      var file = fileInput.files && fileInput.files[0];
+      if (file) handlePhotoFile(file);
+      fileInput.value = "";
+    });
+    return fileInput;
+  }
+
+  function handlePhotoFile(file){
+    var reader = new FileReader();
+    reader.onload = function(){
+      var img = new Image();
+      img.onload = function(){
+        var maxDim = 900;
+        var scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        var w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+        var canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        var dataUrl = canvas.toDataURL("image/jpeg", 0.78);
+        var page = currentPage();
+        snapshotBook();
+        page.photo = dataUrl;
+        page.photoY = 50;
+        page.photoScale = 1;
+        page.sceneEmoji = "";
+        saveBooks(true);
+        renderCanvas();
+        renderPageStripThumb();
+        var body = document.getElementById("trayBody");
+        if (body){ body.innerHTML = renderTrayBody(); bindTrayBodyEvents(); }
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /* ---------------- modal / print ---------------- */
+
+  function showModal(opts){
+    var overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML =
+      '<div class="modal-card"><div class="modal-icon">'+ico(opts.icon||"info",24)+'</div>'+
+        '<h3>'+esc(opts.title)+'</h3><p>'+esc(opts.body)+'</p>'+
+        '<div class="modal-actions">'+
+          '<button class="btn btn-ghost" id="modalCancel">Cancel</button>'+
+          '<button class="btn '+(opts.confirmClass||"btn-primary")+'" id="modalConfirm">'+esc(opts.confirmLabel)+'</button>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener("click", function(e){ if (e.target === overlay) overlay.remove(); });
+    document.getElementById("modalCancel").onclick = function(){ overlay.remove(); };
+    document.getElementById("modalConfirm").onclick = function(){ overlay.remove(); opts.onConfirm(); };
+  }
+
+  var DRAW_COLORS = ["#241C30","#B14432","#E2A93E","#F5E6A8","#6FAE7C","#1F6F63","#C7DEF0","#6B4F94","#FFB3D1","#FFFDF8"];
+
+  function openStickerDrawPanel(page, prefillLabel){
+    var overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    var swatches = DRAW_COLORS.map(function(c, i){
+      return '<button class="draw-color'+(i===0?' active':'')+'" style="background:'+c+'" data-draw-color="'+c+'" aria-label="color"></button>';
+    }).join("");
+    overlay.innerHTML =
+      '<div class="modal-card draw-card">'+
+        '<h3>Draw Your Own Sticker</h3>'+
+        '<p>No sticker for that? Make one! Draw something small and simple.</p>'+
+        '<canvas id="drawCanvas" width="260" height="260"></canvas>'+
+        '<div class="draw-tools">'+
+          '<div class="draw-colors">'+swatches+'</div>'+
+          '<div class="draw-sizes">'+
+            '<button class="draw-size-btn active" data-draw-size="4" aria-label="Thin brush"><span style="width:5px;height:5px;"></span></button>'+
+            '<button class="draw-size-btn" data-draw-size="10" aria-label="Thick brush"><span style="width:11px;height:11px;"></span></button>'+
+          '</div>'+
+          '<button class="btn-icon" id="drawClearBtn" title="Clear drawing" aria-label="Clear drawing">'+ico("trash",16)+'</button>'+
+        '</div>'+
+        '<input class="draw-label-input" id="drawLabelInput" maxlength="24" placeholder="What is it? (like &quot;dragon&quot;)" value="'+esc(prefillLabel||"")+'">'+
+        '<div class="modal-actions">'+
+          '<button class="btn btn-ghost" id="drawCancelBtn">Cancel</button>'+
+          '<button class="btn btn-primary" id="drawSaveBtn">'+ico("plus",16)+'<span>Add to My Page</span></button>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener("click", function(e){ if (e.target === overlay) overlay.remove(); });
+    document.getElementById("drawCancelBtn").onclick = function(){ overlay.remove(); };
+
+    var canvas = document.getElementById("drawCanvas");
+    var ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#FFFDF8";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    var drawColor = DRAW_COLORS[0];
+    var drawSize = 4;
+    var drawing = false, hasDrawn = false;
+
+    function posFromEvent(e){
+      var rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (canvas.width / rect.width),
+        y: (e.clientY - rect.top) * (canvas.height / rect.height)
+      };
+    }
+    canvas.addEventListener("pointerdown", function(e){
+      drawing = true; hasDrawn = true;
+      var p = posFromEvent(e);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      canvas.setPointerCapture(e.pointerId);
+    });
+    canvas.addEventListener("pointermove", function(e){
+      if (!drawing) return;
+      var p = posFromEvent(e);
+      ctx.strokeStyle = drawColor;
+      ctx.lineWidth = drawSize;
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+    });
+    canvas.addEventListener("pointerup", function(){ drawing = false; });
+
+    Array.prototype.forEach.call(overlay.querySelectorAll("[data-draw-color]"), function(el){
+      el.addEventListener("click", function(){
+        drawColor = el.getAttribute("data-draw-color");
+        Array.prototype.forEach.call(overlay.querySelectorAll("[data-draw-color]"), function(x){ x.classList.remove("active"); });
+        el.classList.add("active");
+      });
+    });
+    Array.prototype.forEach.call(overlay.querySelectorAll("[data-draw-size]"), function(el){
+      el.addEventListener("click", function(){
+        drawSize = parseInt(el.getAttribute("data-draw-size"), 10);
+        Array.prototype.forEach.call(overlay.querySelectorAll("[data-draw-size]"), function(x){ x.classList.remove("active"); });
+        el.classList.add("active");
+      });
+    });
+    document.getElementById("drawClearBtn").onclick = function(){
+      ctx.fillStyle = "#FFFDF8";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      hasDrawn = false;
+    };
+
+    document.getElementById("drawSaveBtn").onclick = function(){
+      if (!hasDrawn){ showToast("Draw something first!"); return; }
+      var label = document.getElementById("drawLabelInput").value.trim();
+      var dataUrl = canvas.toDataURL("image/png");
+      CUSTOM_STICKERS.unshift({ id: uid(), dataUrl: dataUrl, label: label });
+      saveCustomStickers();
+      snapshotBook();
+      page.stickers.push({
+        id: uid(), emoji: dataUrl,
+        x: 40 + Math.random()*20, y: 40 + Math.random()*20,
+        rot: Math.round(Math.random()*20 - 10)
+      });
+      saveBooks(true);
+      renderCanvas();
+      overlay.remove();
+      var resultsEl = document.getElementById("stickerResults");
+      if (resultsEl){
+        stickerQuery = "";
+        var searchInput = document.getElementById("stickerSearchInput");
+        if (searchInput) searchInput.value = "";
+        resultsEl.innerHTML = renderStickerResultsHtml(stickerQuery);
+        bindStickerAddButtons(resultsEl, page);
+      }
+      showToast("Your sticker is on the page — and saved under My Stickers!");
+    };
+  }
+
+  /* ---------------- preview ---------------- */
+
+  var previewIndex = 0;
+
+  function renderPreviewPageInner(book, page, isCover){
+    var sceneInner = page.photo
+      ? '<img class="scene-photo" alt="" style="object-position:'+photoObjPos(page)+';transform:scale('+photoScale(page)+');" src="'+page.photo+'">'
+      : (page.sceneEmoji
+          ? '<span class="scene-emoji" style="display:inline-block;transform:scale('+photoScale(page)+');">'+page.sceneEmoji+'</span>'
+          : '');
+    var stickerHtml = page.stickers.map(function(s){
+      return '<div class="sticker" style="left:'+s.x+'%;top:'+s.y+'%;transform:translate(-50%,-50%) rotate('+s.rot+'deg);">'+stickerContentHtml(s.emoji)+'</div>';
+    }).join("");
+    if (isCover){
+      return (
+        '<div class="scene-zone" style="flex:0 0 46%;">'+sceneInner+'</div>'+
+        '<div class="cover-zone">'+
+          '<div class="cover-title-input">'+esc(book.title||"Untitled Book")+'</div>'+
+          '<div class="cover-by">written by</div>'+
+          '<div class="cover-author-input">'+esc(book.author||"You")+'</div>'+
+        '</div>'+
+        '<div class="sticker-layer">'+stickerHtml+'</div>'
+      );
+    }
+    return (
+      '<div class="scene-zone">'+sceneInner+'</div>'+
+      '<div class="text-zone">'+
+        '<div class="story-text fs-'+(page.fontSize||"md")+'" style="color:'+(page.textColor||"#241C30")+';white-space:pre-wrap;height:100%;overflow-y:auto;">'+esc(page.text)+'</div>'+
+      '</div>'+
+      '<div class="sticker-layer">'+stickerHtml+'</div>'
+    );
+  }
+
+  function renderPreviewStage(book){
+    var page = book.pages[previewIndex];
+    var isCover = previewIndex === 0;
+    var wrap = document.getElementById("previewPageWrap");
+    if (!wrap) return;
+    wrap.innerHTML = '<div class="page-canvas" style="background:'+page.bg+';">'+renderPreviewPageInner(book, page, isCover)+'</div>';
+
+    var countEl = document.getElementById("previewCount");
+    if (countEl) countEl.textContent = (previewIndex+1) + " of " + book.pages.length;
+    var prevBtn = document.getElementById("previewPrevBtn");
+    if (prevBtn) prevBtn.disabled = previewIndex === 0;
+    var nextBtn = document.getElementById("previewNextBtn");
+    if (nextBtn) nextBtn.disabled = previewIndex === book.pages.length - 1;
+
+    var dotsEl = document.getElementById("previewDots");
+    if (dotsEl){
+      dotsEl.innerHTML = book.pages.map(function(p, i){
+        return '<button class="preview-dot'+(i===previewIndex?' active':'')+'" data-dot="'+i+'" aria-label="Go to page '+(i+1)+'"></button>';
+      }).join("");
+      Array.prototype.forEach.call(dotsEl.querySelectorAll("[data-dot]"), function(el){
+        el.onclick = function(){ previewIndex = parseInt(el.getAttribute("data-dot"), 10); renderPreviewStage(book); };
+      });
+    }
+  }
+
+  function movePreview(book, dir){
+    var next = previewIndex + dir;
+    if (next < 0 || next >= book.pages.length) return;
+    previewIndex = next;
+    renderPreviewStage(book);
+  }
+
+  function previewKeyHandler(e){
+    var book = currentBook();
+    if (!book) return;
+    if (e.key === "Escape") closePreview();
+    else if (e.key === "ArrowLeft") movePreview(book, -1);
+    else if (e.key === "ArrowRight") movePreview(book, 1);
+  }
+
+  function closePreview(){
+    var overlay = document.getElementById("previewOverlay");
+    if (overlay) overlay.remove();
+    document.removeEventListener("keydown", previewKeyHandler);
+  }
+
+  function openPreview(){
+    var book = currentBook();
+    if (!book) return;
+    previewIndex = state.currentPageIndex || 0;
+
+    var overlay = document.createElement("div");
+    overlay.className = "preview-overlay";
+    overlay.id = "previewOverlay";
+    overlay.innerHTML =
+      '<div class="preview-top">'+
+        '<button class="btn-icon" id="previewCloseBtn" aria-label="Close preview">'+ico("close",18)+'</button>'+
+        '<div class="preview-title">'+esc(book.title||"Untitled Book")+'</div>'+
+        '<button class="btn-icon" id="previewExportBtn" title="Export as PDF" aria-label="Export as PDF">'+ico("filePdf",18)+'</button>'+
+        '<button class="btn btn-outline" id="previewPrintBtn">'+ico("printer",17)+'<span>Print Book</span></button>'+
+      '</div>'+
+      '<div class="preview-stage">'+
+        '<button class="preview-nav-btn" id="previewPrevBtn" aria-label="Previous page">'+ico("chevronLeft",22)+'</button>'+
+        '<div class="preview-page-wrap" id="previewPageWrap"></div>'+
+        '<button class="preview-nav-btn" id="previewNextBtn" aria-label="Next page">'+ico("chevronRight",22)+'</button>'+
+      '</div>'+
+      '<div class="preview-footer">'+
+        '<div class="preview-dots" id="previewDots"></div>'+
+        '<div class="preview-count" id="previewCount"></div>'+
+      '</div>';
+    document.body.appendChild(overlay);
+    renderPreviewStage(book);
+
+    document.getElementById("previewCloseBtn").onclick = closePreview;
+    document.getElementById("previewPrevBtn").onclick = function(){ movePreview(book, -1); };
+    document.getElementById("previewNextBtn").onclick = function(){ movePreview(book, 1); };
+    document.getElementById("previewPrintBtn").onclick = doPrint;
+    document.getElementById("previewExportBtn").onclick = exportPdf;
+    overlay.addEventListener("click", function(e){ if (e.target === overlay) closePreview(); });
+    document.addEventListener("keydown", previewKeyHandler);
+  }
+
+  function buildPrintPageHtml(book, p, i){
+    var stickerHtml = p.stickers.map(function(s){
+      return '<div class="print-sticker" style="left:'+s.x+'%;top:'+s.y+'%;transform:translate(-50%,-50%) rotate('+s.rot+'deg);">'+stickerContentHtml(s.emoji)+'</div>';
+    }).join("");
+    var sceneInner = p.photo ? '<img src="'+p.photo+'" style="object-position:'+photoObjPos(p)+';transform:scale('+photoScale(p)+');">' : (p.sceneEmoji ? '<span class="scene-emoji" style="display:inline-block;transform:scale('+photoScale(p)+');">'+p.sceneEmoji+'</span>' : '');
+    if (i === 0){
+      return (
+        '<div class="print-page" style="background:'+p.bg+'">'+
+          '<div class="print-scene" style="flex:0 0 46%;">'+sceneInner+'</div>'+
+          '<div class="print-cover"><div class="t">'+esc(book.title)+'</div><div class="a">'+esc(book.author)+'</div></div>'+
+          stickerHtml+
+        '</div>'
+      );
+    }
+    return (
+      '<div class="print-page" style="background:'+p.bg+'">'+
+        '<div class="print-scene">'+sceneInner+'</div>'+
+        '<div class="print-text">'+esc(p.text)+'</div>'+
+        stickerHtml+
+      '</div>'
+    );
+  }
+
+  function doPrint(){
+    var book = currentBook();
+    var pagesHtml = book.pages.map(function(p, i){ return buildPrintPageHtml(book, p, i); }).join("");
+
+    saveBooks(true);
+
+    // Printing has to happen in its own top-level tab: a dialog triggered
+    // from inside this embedded page can be silently blocked, so we open a
+    // standalone, fully self-contained print document instead.
+    var doc =
+      '<!doctype html><html><head><meta charset="utf-8"><title>'+esc(book.title||"My Book")+'</title><style>'+
+      '@page{ size:8.5in 11in; margin:0; }'+
+      '*{box-sizing:border-box;}'+
+      'body{ margin:0; background:#e9e4d8; font-family:\'Atkinson Hyperlegible\',-apple-system,sans-serif; }'+
+      '.print-hint{ position:sticky; top:0; z-index:5; background:#153630; color:#F7EFDC; padding:14px 20px; text-align:center; font-size:.95rem; }'+
+      '.print-hint strong{ color:#E2A93E; }'+
+      '.print-page{ width:8.5in; height:11in; margin:14px auto; box-shadow:0 4px 18px rgba(0,0,0,.25); position:relative; overflow:hidden; display:flex; flex-direction:column; }'+
+      '.print-scene{ flex:0 0 68%; position:relative; display:flex; align-items:center; justify-content:center; overflow:hidden; }'+
+      '.print-scene .scene-emoji{ font-size:7.5rem; }'+
+      '.print-scene img{ width:100%; height:100%; object-fit:cover; }'+
+      '.print-text{ flex:1; padding:22px 34px; color:#241C30; line-height:1.55; white-space:pre-wrap; }'+
+      '.print-cover{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:30px; }'+
+      '.print-cover .t{ font-family:Georgia,serif; font-weight:700; font-size:2rem; color:#241C30; }'+
+      '.print-cover .a{ font-family:cursive; font-size:1.6rem; color:#5C5369; margin-top:8px; }'+
+      '.print-sticker{ position:absolute; font-size:2rem; transform:translate(-50%,-50%); }'+
+      '.print-sticker svg, .print-sticker img{ width:2rem; height:2rem; display:block; }'+
+      '@media print{ .print-hint{ display:none; } .print-page{ margin:0 auto; box-shadow:none; page-break-after:always; } .print-page:last-child{ page-break-after:auto; } body{ background:#fff; } }'+
+      '</style></head><body>'+
+      '<div class="print-hint">Your book is ready! If the print window didn\'t open on its own, press <strong>Ctrl+P</strong> (or <strong>Cmd+P</strong> on a Mac) to print or save as a PDF.</div>'+
+      pagesHtml+
+      '<script>window.addEventListener("load", function(){ setTimeout(function(){ window.print(); }, 250); });<\/script>'+
+      '</body></html>';
+
+    var blob = new Blob([doc], { type: "text/html" });
+    var url = URL.createObjectURL(blob);
+    var win = window.open(url, "_blank");
+    if (!win){
+      showToast("Please allow pop-ups for this page, then tap Print Book again.");
+      return;
+    }
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+  }
+
+  async function tryGetCapability(name){
+    try{
+      if (window.claude && typeof window.claude.use === "function"){
+        return await window.claude.use(name);
+      }
+    } catch(e){}
+    return null;
+  }
+
+  function showPdfOverlay(url, title){
+    var overlay = document.createElement("div");
+    overlay.className = "pdf-overlay";
+    overlay.id = "pdfOverlay";
+    overlay.innerHTML =
+      '<div class="pdf-overlay-top">'+
+        '<button class="btn-icon" id="pdfOverlayClose" aria-label="Close PDF preview">'+ico("close",18)+'</button>'+
+        '<div class="pdf-overlay-title">'+esc(title||"Your Book PDF")+'</div>'+
+      '</div>'+
+      '<p class="pdf-overlay-hint">Your PDF is ready below! Use your browser\'s own download or print icon (usually in the top corner of the preview) to save it — or press and hold / right-click the page and choose "Save As".</p>'+
+      '<iframe class="pdf-overlay-frame" src="'+url+'" title="'+esc(title||"Book PDF")+'"></iframe>';
+    document.body.appendChild(overlay);
+    document.getElementById("pdfOverlayClose").onclick = function(){
+      overlay.remove();
+      URL.revokeObjectURL(url);
+    };
+  }
+
+  async function exportPdf(){
+    var book = currentBook();
+    if (!book) return;
+    if (!window.html2canvas || !window.jspdf){
+      showToast("PDF export isn't available right now — try Print Book instead.");
+      return;
+    }
+
+    showToast("Creating your PDF… this can take a moment.");
+    saveBooks(true);
+
+    var stage = document.createElement("div");
+    stage.className = "pdf-stage";
+    document.body.appendChild(stage);
+
+    try{
+      var JsPdfCtor = window.jspdf.jsPDF;
+      var pdf = new JsPdfCtor({ unit: "in", format: "letter" });
+
+      for (var i = 0; i < book.pages.length; i++){
+        stage.innerHTML = buildPrintPageHtml(book, book.pages[i], i);
+        var pageEl = stage.querySelector(".print-page");
+        var canvas = await window.html2canvas(pageEl, { scale: 2, useCORS: true });
+        var imgData = canvas.toDataURL("image/jpeg", 0.92);
+        if (i > 0) pdf.addPage("letter", "portrait");
+        pdf.addImage(imgData, "JPEG", 0, 0, 8.5, 11);
+      }
+
+      var blob = pdf.output("blob");
+      var fileBase = (book.title || "My Book").replace(/[\\/:*?"<>|]/g, "").trim() || "My Book";
+
+      // Prefer the platform's own "save this file" prompt — it works
+      // regardless of browser pop-up settings. Fall back to an in-page
+      // viewer only when that capability isn't available here.
+      var downloads = await tryGetCapability("downloads");
+      if (downloads){
+        try{
+          await downloads.save({ filename: fileBase + ".pdf", data: blob });
+          showToast("Your PDF was saved!");
+        } catch(err){
+          var code = err && err.code;
+          if (code === "declined"){
+            // they chose not to save — nothing more to do
+          } else if (code === "too_large"){
+            showToast("That PDF is too big to save here — try Print Book instead.");
+          } else {
+            showPdfOverlay(URL.createObjectURL(blob), book.title);
+          }
+        }
+      } else {
+        showPdfOverlay(URL.createObjectURL(blob), book.title);
+      }
+    } catch(e){
+      showToast("Something went wrong making the PDF — try Print Book instead.");
+    } finally {
+      stage.remove();
+    }
+  }
+
+  /* ---------------- boot ---------------- */
+
+  state.books = loadBooks();
+  CUSTOM_STICKERS = loadCustomStickers();
+  saveBooks(true);
+  render();
+
+})();
+</script>
