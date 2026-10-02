@@ -78,7 +78,16 @@
   .brand-text{ display:flex; flex-direction:column; gap:6px; }
   .brand-name{ font-size:clamp(2.6rem,4.6vw,3.8rem); font-weight:700; color:var(--cream); letter-spacing:-.01em; line-height:.95; }
   .brand-tagline{ margin:0; font-size:1.3rem; color:var(--cream-soft); font-style:italic; max-width:30ch; line-height:1.3; }
-  .topline{ border-bottom:1px solid var(--cloth-line); padding:26px 0 28px; margin-bottom:6px; }
+  .topline{
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    border-bottom:1px solid var(--cloth-line); padding:26px 0 28px; margin-bottom:6px;
+  }
+  .sync-code-btn{
+    background:rgba(247,239,220,.06); border:1.5px solid var(--cloth-line); color:var(--cream-soft);
+    padding:9px 16px; border-radius:999px; font-family:var(--font-body); font-weight:700; font-size:.82rem;
+    cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:.15s ease; flex:none;
+  }
+  .sync-code-btn:hover{ border-color:var(--gold); color:var(--gold-soft); background:rgba(226,169,62,.08); }
   @media (max-width:600px){ .brand-logo{ height:120px; } }
 
   /* ---------- gallery ---------- */
@@ -511,6 +520,16 @@
   .modal-card p{ margin:0 0 18px; color:var(--ink-soft); font-size:.9rem; }
   .modal-actions{ display:flex; gap:10px; justify-content:center; }
 
+  .sync-card{ max-width:360px; }
+  .sync-code-display{
+    font-family:var(--font-display); font-optical-sizing:auto; font-weight:700; font-size:1.3rem;
+    letter-spacing:.03em; color:var(--cloth-deep); background:var(--paper); border:2px solid var(--line);
+    border-radius:12px; padding:12px; margin-bottom:12px; word-break:break-all;
+  }
+  .sync-card .btn-ghost{ width:100%; justify-content:center; margin-bottom:18px; }
+  .sync-divider{ font-size:.78rem; color:var(--ink-faint); margin-bottom:10px; text-transform:uppercase; letter-spacing:.4px; }
+  .sync-card .draw-label-input{ margin-top:0; margin-bottom:16px; }
+
   /* book preview */
   .preview-overlay{
     position:fixed; inset:0; background:var(--cloth-deep); z-index:80;
@@ -601,6 +620,66 @@
   var STORAGE_KEY = "paperTales.books.v4";
   var fileInput = null;
 
+  /* ---------------- cloud sync (MongoDB, via /api/library) ---------------- */
+
+  var LIBRARY_ID_KEY = "paperTales.libraryId";
+  var libraryId = null;
+
+  function getOrCreateLibraryId(){
+    try{
+      var existing = localStorage.getItem(LIBRARY_ID_KEY);
+      if (existing) return existing;
+    } catch(e){}
+    var fresh = (window.crypto && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : (Date.now().toString(36) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2));
+    try{ localStorage.setItem(LIBRARY_ID_KEY, fresh); } catch(e){}
+    return fresh;
+  }
+
+  var serverSyncTimer = null;
+  function syncToServer(){
+    if (!libraryId) return;
+    clearTimeout(serverSyncTimer);
+    serverSyncTimer = setTimeout(function(){
+      fetch("/api/library", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: libraryId, books: state.books, customStickers: CUSTOM_STICKERS })
+      }).catch(function(){ /* offline or API unavailable — local save already has the data */ });
+    }, 600);
+  }
+
+  function loadLibraryFromServer(id){
+    return fetch("/api/library?id=" + encodeURIComponent(id))
+      .then(function(r){
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error("fetch failed");
+        return r.json();
+      })
+      .catch(function(){ return undefined; }); // undefined = couldn't reach server at all
+  }
+
+  function switchLibrary(newId){
+    libraryId = newId;
+    try{ localStorage.setItem(LIBRARY_ID_KEY, newId); } catch(e){}
+    return loadLibraryFromServer(newId).then(function(data){
+      if (data && Array.isArray(data.books) && data.books.length){
+        state.books = data.books;
+        if (Array.isArray(data.customStickers)) CUSTOM_STICKERS = data.customStickers;
+      } else {
+        state.books = sampleBooks();
+        CUSTOM_STICKERS = [];
+      }
+      state.view = "gallery";
+      state.currentBookId = null;
+      saveBooks(true);
+      saveCustomStickers();
+      render();
+      return data !== undefined;
+    });
+  }
+
   var ICON_PATHS = {
     book: '<path d="M12 7c-1.6-1.1-4.2-1.6-6.3-1.3-.4.05-.7.4-.7.85v11.6c0 .5.45.9.95.82 2-.3 4.4.1 6.05 1.16M12 7c1.6-1.1 4.2-1.6 6.3-1.3.4.05.7.4.7.85v11.6c0 .5-.45.9-.95.82-2-.3-4.4.1-6.05 1.16M12 7v12.2"/>',
     chevronLeft: '<polyline points="15 18 9 12 15 6"/>',
@@ -623,7 +702,8 @@
     pencil: '<path d="M4 20l1-4.5L15.5 5l3.5 3.5L8.5 19 4 20Z"/><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"/>',
     bookOpen: '<path d="M12 6.5c-1.6-1-4-1.5-6-1.2-.4.05-.7.4-.7.85v11.2c0 .5.45.9.95.82 1.9-.3 4.15.1 5.75 1.13M12 6.5c1.6-1 4-1.5 6-1.2.4.05.7.4.7.85v11.2c0 .5-.45.9-.95.82-1.9-.3-4.15.1-5.75 1.13M12 6.5v11.8"/>',
     close: '<line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/>',
-    filePdf: '<path d="M14 3H7a1.5 1.5 0 0 0-1.5 1.5v15A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V8.5L14 3Z"/><path d="M14 3v5.5H19"/><line x1="12" y1="11.5" x2="12" y2="17.5"/><polyline points="9.3 15 12 17.5 14.7 15"/>'
+    filePdf: '<path d="M14 3H7a1.5 1.5 0 0 0-1.5 1.5v15A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V8.5L14 3Z"/><path d="M14 3v5.5H19"/><line x1="12" y1="11.5" x2="12" y2="17.5"/><polyline points="9.3 15 12 17.5 14.7 15"/>',
+    cloud: '<path d="M7 18a4.5 4.5 0 0 1-.4-8.98A5.5 5.5 0 0 1 17.3 8.1 4 4 0 0 1 17 18H7Z"/>'
   };
   function ico(name, size){
     size = size || 18;
@@ -1021,6 +1101,7 @@
       } catch(e){
         showToast("We ran out of space to save! Try removing a photo or making it smaller.");
       }
+      syncToServer();
     };
     if (immediate) run(); else saveTimer = setTimeout(run, 500);
   }
@@ -1185,6 +1266,7 @@
             '<p class="brand-tagline">A little publishing house for big imaginations</p>'+
           '</div>'+
         '</div>'+
+        '<button class="sync-code-btn" id="syncCodeBtn" title="See or restore your save code">'+ico("cloud",15)+'<span>Sync Code</span></button>'+
       '</header>'+
       '<div class="wrap gallery-hero">'+
         '<div class="gallery-hero-copy">'+
@@ -1217,6 +1299,7 @@
 
     document.getElementById("heroNewBtn").onclick = createNewBook;
     document.getElementById("newBookCard").onclick = createNewBook;
+    document.getElementById("syncCodeBtn").onclick = openSyncCodeModal;
 
     Array.prototype.forEach.call(document.querySelectorAll("[data-open]"), function(el){
       el.addEventListener("click", function(e){
@@ -1869,6 +1952,57 @@
     document.getElementById("modalConfirm").onclick = function(){ overlay.remove(); opts.onConfirm(); };
   }
 
+  function openSyncCodeModal(){
+    var overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML =
+      '<div class="modal-card sync-card">'+
+        '<h3>Your Sync Code</h3>'+
+        '<p>This code saves your books to the cloud. Write it down — enter it on another device to get your books back!</p>'+
+        '<div class="sync-code-display" id="syncCodeDisplay">'+esc(libraryId)+'</div>'+
+        '<button class="btn btn-ghost" id="syncCodeCopyBtn">'+ico("copy",15)+'<span>Copy Code</span></button>'+
+        '<div class="sync-divider">Have a code from another device?</div>'+
+        '<input class="draw-label-input" id="syncCodeInput" placeholder="Paste a sync code here" maxlength="80">'+
+        '<div class="modal-actions">'+
+          '<button class="btn btn-ghost" id="syncCancelBtn">Close</button>'+
+          '<button class="btn btn-primary" id="syncLoadBtn">Load This Code</button>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener("click", function(e){ if (e.target === overlay) overlay.remove(); });
+    document.getElementById("syncCancelBtn").onclick = function(){ overlay.remove(); };
+
+    document.getElementById("syncCodeCopyBtn").onclick = function(){
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(libraryId)
+          .then(function(){ showToast("Code copied!"); })
+          .catch(function(){ showToast("Couldn't copy — select and copy it manually."); });
+      } else {
+        showToast("Couldn't copy — select and copy it manually.");
+      }
+    };
+
+    document.getElementById("syncLoadBtn").onclick = function(){
+      var input = document.getElementById("syncCodeInput");
+      var newId = input.value.trim();
+      if (!newId){ showToast("Type or paste a code first."); return; }
+      if (newId === libraryId){ showToast("That's already your current code!"); return; }
+      showModal({
+        icon: "cloud",
+        title: "Switch to this code?",
+        body: "This will replace the books you see here with whatever is saved under that code. Nothing is deleted — your current books stay safe under your old code.",
+        confirmLabel: "Yes, switch",
+        onConfirm: function(){
+          overlay.remove();
+          showToast("Loading your books…");
+          switchLibrary(newId).then(function(found){
+            showToast(found ? "Books loaded!" : "No books found for that code — starting fresh.");
+          });
+        }
+      });
+    };
+  }
+
   var DRAW_COLORS = ["#241C30","#B14432","#E2A93E","#F5E6A8","#6FAE7C","#1F6F63","#C7DEF0","#6B4F94","#FFB3D1","#FFFDF8"];
 
   function openStickerDrawPanel(page, prefillLabel){
@@ -2250,10 +2384,26 @@
 
   /* ---------------- boot ---------------- */
 
+  libraryId = getOrCreateLibraryId();
   state.books = loadBooks();
   CUSTOM_STICKERS = loadCustomStickers();
-  saveBooks(true);
   render();
+
+  loadLibraryFromServer(libraryId).then(function(data){
+    if (data && Array.isArray(data.books) && data.books.length){
+      if (state.view === "gallery"){
+        state.books = data.books;
+        if (Array.isArray(data.customStickers)) CUSTOM_STICKERS = data.customStickers;
+        try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.books)); } catch(e){}
+        saveCustomStickers();
+        render();
+      }
+    } else if (data === null){
+      // no cloud copy yet under this id — push what we have so the cloud gets initialized
+      syncToServer();
+    }
+    // data === undefined means the server was unreachable; keep using local data quietly
+  });
 
 })();
 </script>

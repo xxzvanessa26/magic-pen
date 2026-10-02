@@ -1,0 +1,9 @@
+{
+  "name": "magic-pen",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Magic Pen — a simple storybook maker for kids, with cloud sync.",
+  "dependencies": {
+    "mongodb": "^6.10.0"
+  }
+}
