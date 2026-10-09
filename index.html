@@ -1425,6 +1425,24 @@
 
   var PHOTO_ZOOM_MIN = 1, PHOTO_ZOOM_MAX = 2.5, PHOTO_ZOOM_STEP = 0.2;
 
+  var SCENE_SIZES = [
+    { k: "sm", pct: 38, label: "Small" },
+    { k: "md", pct: 50, label: "Medium" },
+    { k: "lg", pct: 62, label: "Large" },
+    { k: "xl", pct: 74, label: "Extra Large" }
+  ];
+
+  function sceneSizeKey(page, isCover){
+    return page.sceneSize || (isCover ? "md" : "lg");
+  }
+  function sceneFlexBasis(page, isCover){
+    var key = sceneSizeKey(page, isCover);
+    for (var i = 0; i < SCENE_SIZES.length; i++){
+      if (SCENE_SIZES[i].k === key) return SCENE_SIZES[i].pct + "%";
+    }
+    return isCover ? "50%" : "62%";
+  }
+
   function photoObjPos(page){
     var y = (typeof page.photoY === "number") ? page.photoY : 50;
     return "center " + y + "%";
@@ -1771,7 +1789,7 @@
 
     if (isCover){
       canvasEl.innerHTML =
-        '<div class="scene-zone" style="flex:0 0 46%;">'+sceneInner+'</div>'+
+        '<div class="scene-zone" style="flex:0 0 '+sceneFlexBasis(page,true)+';">'+sceneInner+'</div>'+
         '<div class="cover-zone">'+
           '<input class="cover-title-input" id="coverTitleInput" placeholder="What\'s Your Book Called?" maxlength="70" value="'+esc(book.title)+'" aria-label="Book title">'+
           '<div class="cover-by">written by</div>'+
@@ -1792,7 +1810,7 @@
       ca.addEventListener("input", function(){ book.author = ca.value; saveBooks(); });
     } else {
       canvasEl.innerHTML =
-        '<div class="scene-zone">'+sceneInner+'</div>'+
+        '<div class="scene-zone" style="flex:0 0 '+sceneFlexBasis(page,false)+';">'+sceneInner+'</div>'+
         '<div class="text-zone">'+
           '<textarea class="story-text fs-'+(page.fontSize||'md')+'" id="storyText" placeholder="Once upon a time… what happens on this page?" maxlength="600" aria-label="Story text for this page" style="color:'+(page.textColor||'#241C30')+'">'+esc(page.text)+'</textarea>'+
         '</div>'+
@@ -1951,8 +1969,15 @@
         return '<div class="tray-section"><h4>'+g.label+'</h4><div class="emoji-grid">'+btns+'</div></div>';
       }).join("");
       var removeBtn = (page.photo || page.sceneEmoji) ? '<button class="remove-photo" id="clearScene">Clear picture</button>' : '';
+      var curSceneSize = sceneSizeKey(page, isCover);
+      var sceneSizeSection =
+        '<div class="tray-section"><h4>Picture Area</h4><div class="size-row">'+
+          SCENE_SIZES.map(function(s){
+            return '<button class="size-btn'+(curSceneSize===s.k?' active':'')+'" data-scene-size="'+s.k+'" title="'+s.label+'" aria-label="'+s.label+' picture area">'+s.k.toUpperCase()+'</button>';
+          }).join("")+
+        '</div></div>';
       var zoomSection = (page.photo || page.sceneEmoji) ? (
-        '<div class="tray-section"><h4>Picture Size</h4>'+
+        '<div class="tray-section"><h4>Zoom</h4>'+
           '<div class="zoom-row">'+
             '<button class="zoom-btn" data-zoom="out"'+(photoScale(page)<=PHOTO_ZOOM_MIN?' disabled':'')+' aria-label="Make picture smaller">'+ico("zoomOut",16)+'</button>'+
             '<span class="zoom-pct">'+Math.round(photoScale(page)*100)+'%</span>'+
@@ -1965,7 +1990,7 @@
         '<div class="tray-section"><h4>Your Own Photo</h4>'+
           '<button class="upload-btn" id="uploadPhotoBtn">'+ico("upload",16)+'<span>Upload a Photo</span></button>'+
           removeBtn+
-        '</div>'+ zoomSection + groupsHtml
+        '</div>'+ sceneSizeSection + zoomSection + groupsHtml
       );
     }
 
@@ -2046,6 +2071,7 @@
 
   function bindTrayBodyEvents(){
     var page = currentPage();
+    var isCover = state.currentPageIndex === 0;
 
     var uploadBtn = document.getElementById("uploadPhotoBtn");
     if (uploadBtn) uploadBtn.onclick = function(){ ensureFileInput().click(); };
@@ -2058,6 +2084,20 @@
       document.getElementById("trayBody").innerHTML = renderTrayBody();
       bindTrayBodyEvents();
     };
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-scene-size]"), function(el){
+      el.addEventListener("click", function(){
+        var size = el.getAttribute("data-scene-size");
+        if (size === sceneSizeKey(page, isCover)) return;
+        snapshotBook();
+        page.sceneSize = size;
+        saveBooks(true);
+        renderCanvas();
+        renderPageStripThumb();
+        document.getElementById("trayBody").innerHTML = renderTrayBody();
+        bindTrayBodyEvents();
+      });
+    });
 
     Array.prototype.forEach.call(document.querySelectorAll("[data-zoom]"), function(el){
       el.addEventListener("click", function(){
@@ -2380,7 +2420,7 @@
     }).join("");
     if (isCover){
       return (
-        '<div class="scene-zone" style="flex:0 0 46%;">'+sceneInner+'</div>'+
+        '<div class="scene-zone" style="flex:0 0 '+sceneFlexBasis(page,true)+';">'+sceneInner+'</div>'+
         '<div class="cover-zone">'+
           '<div class="cover-title-input">'+esc(book.title||"Untitled Book")+'</div>'+
           '<div class="cover-by">written by</div>'+
@@ -2390,7 +2430,7 @@
       );
     }
     return (
-      '<div class="scene-zone">'+sceneInner+'</div>'+
+      '<div class="scene-zone" style="flex:0 0 '+sceneFlexBasis(page,false)+';">'+sceneInner+'</div>'+
       '<div class="text-zone">'+
         '<div class="story-text fs-'+(page.fontSize||"md")+'" style="color:'+(page.textColor||"#241C30")+';white-space:pre-wrap;height:100%;overflow-y:auto;">'+esc(page.text)+'</div>'+
       '</div>'+
