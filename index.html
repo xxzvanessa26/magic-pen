@@ -506,7 +506,7 @@
   /* modal */
   .modal-overlay{
     position:fixed; inset:0; background:rgba(9,7,12,.55); display:flex; align-items:center; justify-content:center;
-    padding:20px; z-index:50;
+    padding:20px; z-index:70;
   }
   .modal-card{
     background:var(--paper-white); border-radius:18px; padding:26px; max-width:340px; width:100%;
@@ -529,6 +529,21 @@
   .sync-card .btn-ghost{ width:100%; justify-content:center; margin-bottom:18px; }
   .sync-divider{ font-size:.78rem; color:var(--ink-faint); margin-bottom:10px; text-transform:uppercase; letter-spacing:.4px; }
   .sync-card .draw-label-input{ margin-top:0; margin-bottom:16px; }
+
+  .auth-card{ max-width:360px; }
+  .auth-card p{ margin-bottom:14px; }
+  .auth-error{
+    background:rgba(177,68,50,.1); color:var(--berry-deep); border:1.5px solid rgba(177,68,50,.3);
+    border-radius:10px; padding:9px 12px; font-size:.82rem; margin-bottom:12px; text-align:left;
+  }
+  .auth-submit-btn{ width:100%; justify-content:center; margin-top:18px; }
+  .auth-submit-btn:disabled{ opacity:.6; cursor:not-allowed; }
+  .auth-toggle{ font-size:.82rem; color:var(--ink-soft); margin:14px 0 18px; }
+  .auth-toggle a{ color:var(--cloth-deep); font-weight:700; text-decoration:underline; }
+  .auth-close-btn{ width:100%; justify-content:center; }
+
+  .account-area{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .account-email{ font-size:.82rem; color:var(--cream-soft); font-weight:600; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   /* book preview */
   .preview-overlay{
@@ -606,9 +621,66 @@
     font-weight:600; box-shadow:var(--shadow-3); opacity:0; transition:.25s ease; z-index:60; pointer-events:none;
   }
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* chat assistant */
+  .chat-fab{
+    position:fixed; right:22px; bottom:22px; z-index:65;
+    width:58px; height:58px; border-radius:50%; border:none; cursor:pointer;
+    background:linear-gradient(180deg, var(--gold-soft), var(--gold) 70%); color:var(--cloth-deep);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 10px 24px -6px rgba(226,169,62,.6), inset 0 1px 0 rgba(255,255,255,.5);
+    transition:transform .15s ease;
+  }
+  .chat-fab:hover{ transform:translateY(-2px) scale(1.04); }
+  .chat-fab[hidden]{ display:none; }
+
+  .chat-panel{
+    position:fixed; right:20px; bottom:92px; z-index:65;
+    width:min(340px, calc(100vw - 40px)); height:min(480px, calc(100vh - 140px));
+    background:var(--paper-white); border-radius:18px; overflow:hidden;
+    box-shadow:var(--shadow-3); display:flex; flex-direction:column;
+  }
+  .chat-panel[hidden]{ display:none; }
+  .chat-panel-top{
+    flex:none; display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:14px 16px; background:var(--cloth-deep); color:var(--cream);
+  }
+  .chat-panel-title{ font-family:var(--font-display); font-optical-sizing:auto; font-weight:600; font-size:1.02rem; }
+  .chat-panel-top .btn-icon{ width:30px; height:30px; border-radius:9px; background:rgba(247,239,220,.1); border-color:rgba(247,239,220,.25); color:var(--cream); }
+  .chat-panel-top .btn-icon:hover{ border-color:var(--gold); color:var(--gold-soft); }
+
+  .chat-messages{ flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; }
+  .chat-bubble{ max-width:84%; padding:9px 13px; border-radius:14px; font-size:.88rem; line-height:1.5; }
+  .chat-bubble-bot{ align-self:flex-start; background:var(--gold-tint); color:var(--ink); border-bottom-left-radius:4px; }
+  .chat-bubble-user{ align-self:flex-end; background:var(--cloth-deep); color:var(--cream); border-bottom-right-radius:4px; }
+  .chat-bubble-typing{ display:inline-flex; gap:4px; align-items:center; padding:3px 0; }
+  .chat-bubble-typing span{ width:6px; height:6px; border-radius:50%; background:var(--ink-faint); animation:chatTypingDot 1.1s infinite ease-in-out; }
+  .chat-bubble-typing span:nth-child(2){ animation-delay:.15s; }
+  .chat-bubble-typing span:nth-child(3){ animation-delay:.3s; }
+  @keyframes chatTypingDot{ 0%,60%,100%{ opacity:.3; transform:translateY(0); } 30%{ opacity:1; transform:translateY(-2px); } }
+
+  .chat-input-row{ flex:none; display:flex; gap:8px; padding:12px; border-top:1px solid var(--line-soft); }
+  .chat-input-row input{
+    flex:1; padding:10px 13px; border-radius:999px; border:2px solid var(--line); background:var(--paper);
+    font-family:var(--font-body); font-size:.86rem; color:var(--ink); outline:none;
+  }
+  .chat-input-row input:focus{ border-color:var(--cloth-deep); }
+  .chat-input-row input::placeholder{ color:var(--ink-faint); }
+  .chat-send-btn{
+    flex:none; width:40px; height:40px; border-radius:50%; border:none; cursor:pointer;
+    background:linear-gradient(180deg, var(--gold-soft), var(--gold) 70%); color:var(--cloth-deep);
+    display:flex; align-items:center; justify-content:center; transition:.15s ease;
+  }
+  .chat-send-btn:hover{ transform:scale(1.06); }
+  .chat-send-btn:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
+  @media (max-width:480px){
+    .chat-panel{ right:12px; bottom:84px; width:calc(100vw - 24px); }
+    .chat-fab{ right:16px; bottom:16px; }
+  }
 </style>
 
 <div id="app"></div>
+<div id="chatWidget"></div>
 <div id="toast" class="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -680,6 +752,159 @@
     });
   }
 
+  /* ---------------- account auth ---------------- */
+
+  var authUser = null; // {id, email, name} or null when signed out
+
+  function apiMe(){
+    return fetch("/api/auth/me", { credentials: "same-origin" })
+      .then(function(r){ return r.ok ? r.json() : { user: null }; })
+      .then(function(data){ return data.user || null; })
+      .catch(function(){ return null; });
+  }
+
+  function apiSignup(email, password){
+    return fetch("/api/auth/signup", {
+      method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email, password: password })
+    }).then(function(r){
+      return r.json().then(function(data){
+        if (!r.ok) throw { message: (data && data.message) || "Something went wrong." };
+        return data.user;
+      });
+    });
+  }
+
+  function apiLogin(email, password){
+    return fetch("/api/auth/login", {
+      method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email, password: password })
+    }).then(function(r){
+      return r.json().then(function(data){
+        if (!r.ok) throw { message: (data && data.message) || "Something went wrong." };
+        return data.user;
+      });
+    });
+  }
+
+  function apiLogout(){
+    return fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" }).catch(function(){});
+  }
+
+  function loadMyLibrary(){
+    // Session-aware — the server figures out whose library this is, no id needed.
+    return fetch("/api/library", { credentials: "same-origin" })
+      .then(function(r){
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error("fetch failed");
+        return r.json();
+      })
+      .catch(function(){ return undefined; });
+  }
+
+  function onSignupSuccess(user){
+    authUser = user;
+    // Claim whatever this browser already had (sample or anonymous-synced
+    // books) as the brand-new account's starting library.
+    state.view = "gallery";
+    state.currentBookId = null;
+    saveBooks(true);
+    saveCustomStickers();
+    render();
+  }
+
+  function onLoginSuccess(user){
+    authUser = user;
+    return loadMyLibrary().then(function(data){
+      if (data && Array.isArray(data.books) && data.books.length){
+        state.books = data.books;
+        if (Array.isArray(data.customStickers)) CUSTOM_STICKERS = data.customStickers;
+      } else {
+        state.books = sampleBooks();
+        CUSTOM_STICKERS = [];
+      }
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.books)); } catch(e){}
+      saveCustomStickers();
+      state.view = "gallery";
+      state.currentBookId = null;
+      render();
+    });
+  }
+
+  function doLogout(){
+    apiLogout().then(function(){
+      authUser = null;
+      state.books = loadBooks();
+      CUSTOM_STICKERS = loadCustomStickers();
+      state.view = "gallery";
+      state.currentBookId = null;
+      render();
+      showToast("Logged out.");
+    });
+  }
+
+  function renderAuthModalBody(overlay, mode, errorMsg){
+    var isSignup = mode === "signup";
+    overlay.innerHTML =
+      '<div class="modal-card auth-card">'+
+        '<h3>'+(isSignup ? "Create Your Account" : "Log In")+'</h3>'+
+        '<p>'+(isSignup ? "Save your books to your own account — come back to them on any device." : "Welcome back! Log in to see your own books.")+'</p>'+
+        (errorMsg ? '<div class="auth-error">'+esc(errorMsg)+'</div>' : '')+
+        '<input class="draw-label-input" id="authEmail" type="email" placeholder="Parent\'s email address" autocomplete="email">'+
+        '<input class="draw-label-input" id="authPassword" type="password" placeholder="'+(isSignup ? "Password (at least 8 characters)" : "Password")+'" autocomplete="'+(isSignup ? "new-password" : "current-password")+'">'+
+        '<button class="btn btn-primary auth-submit-btn" id="authSubmitBtn">'+(isSignup ? "Sign Up" : "Log In")+'</button>'+
+        '<p class="auth-toggle">'+(isSignup ? "Already have an account? " : "New here? ")+'<a href="#" id="authToggleLink">'+(isSignup ? "Log In" : "Create one")+'</a></p>'+
+        '<button class="btn btn-ghost auth-close-btn" id="authCloseBtn">Cancel</button>'+
+      '</div>';
+
+    document.getElementById("authCloseBtn").onclick = function(){ overlay.remove(); };
+    document.getElementById("authToggleLink").onclick = function(e){
+      e.preventDefault();
+      renderAuthModalBody(overlay, isSignup ? "login" : "signup", "");
+    };
+    document.getElementById("authPassword").addEventListener("keydown", function(e){
+      if (e.key === "Enter") document.getElementById("authSubmitBtn").click();
+    });
+    document.getElementById("authSubmitBtn").onclick = function(){
+      var email = document.getElementById("authEmail").value.trim();
+      var password = document.getElementById("authPassword").value;
+      if (!email || !password){
+        renderAuthModalBody(overlay, mode, "Please fill in both fields.");
+        return;
+      }
+      var btn = document.getElementById("authSubmitBtn");
+      btn.disabled = true;
+      btn.textContent = isSignup ? "Creating account…" : "Logging in…";
+
+      var action = isSignup
+        ? apiSignup(email, password).then(function(user){
+            overlay.remove();
+            onSignupSuccess(user);
+            showToast("Account created! Your books are now saved to your account.");
+          })
+        : apiLogin(email, password).then(function(user){
+            return onLoginSuccess(user);
+          }).then(function(){
+            overlay.remove();
+            showToast("Welcome back!");
+          });
+
+      action.catch(function(err){
+        renderAuthModalBody(overlay, mode, (err && err.message) || "Something went wrong — please try again.");
+      });
+    };
+  }
+
+  function openAuthModal(mode){
+    var overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    document.body.appendChild(overlay);
+    renderAuthModalBody(overlay, mode || "login", "");
+    overlay.addEventListener("click", function(e){ if (e.target === overlay) overlay.remove(); });
+  }
+
   var ICON_PATHS = {
     book: '<path d="M12 7c-1.6-1.1-4.2-1.6-6.3-1.3-.4.05-.7.4-.7.85v11.6c0 .5.45.9.95.82 2-.3 4.4.1 6.05 1.16M12 7c1.6-1.1 4.2-1.6 6.3-1.3.4.05.7.4.7.85v11.6c0 .5-.45.9-.95.82-2-.3-4.4.1-6.05 1.16M12 7v12.2"/>',
     chevronLeft: '<polyline points="15 18 9 12 15 6"/>',
@@ -703,7 +928,11 @@
     bookOpen: '<path d="M12 6.5c-1.6-1-4-1.5-6-1.2-.4.05-.7.4-.7.85v11.2c0 .5.45.9.95.82 1.9-.3 4.15.1 5.75 1.13M12 6.5c1.6-1 4-1.5 6-1.2.4.05.7.4.7.85v11.2c0 .5-.45.9-.95.82-1.9-.3-4.15.1-5.75 1.13M12 6.5v11.8"/>',
     close: '<line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/>',
     filePdf: '<path d="M14 3H7a1.5 1.5 0 0 0-1.5 1.5v15A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V8.5L14 3Z"/><path d="M14 3v5.5H19"/><line x1="12" y1="11.5" x2="12" y2="17.5"/><polyline points="9.3 15 12 17.5 14.7 15"/>',
-    cloud: '<path d="M7 18a4.5 4.5 0 0 1-.4-8.98A5.5 5.5 0 0 1 17.3 8.1 4 4 0 0 1 17 18H7Z"/>'
+    cloud: '<path d="M7 18a4.5 4.5 0 0 1-.4-8.98A5.5 5.5 0 0 1 17.3 8.1 4 4 0 0 1 17 18H7Z"/>',
+    user: '<circle cx="12" cy="8" r="3.5"/><path d="M5 19.5c1.2-3.2 4-5 7-5s5.8 1.8 7 5"/>',
+    logout: '<path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h6A1.5 1.5 0 0 1 18 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-6A1.5 1.5 0 0 1 9 18.5V17"/><line x1="14" y1="12" x2="3" y2="12"/><polyline points="6.5 8.5 3 12 6.5 15.5"/>',
+    chatBubble: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8A2.5 2.5 0 0 1 17.5 16H11l-4.5 4v-4H6.5A2.5 2.5 0 0 1 4 13.5v-8Z"/><circle cx="8.5" cy="9.5" r=".6" fill="currentColor" stroke="none"/><circle cx="12" cy="9.5" r=".6" fill="currentColor" stroke="none"/><circle cx="15.5" cy="9.5" r=".6" fill="currentColor" stroke="none"/>',
+    send: '<line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/>'
   };
   function ico(name, size){
     size = size || 18;
@@ -1266,7 +1495,14 @@
             '<p class="brand-tagline">A little publishing house for big imaginations</p>'+
           '</div>'+
         '</div>'+
-        '<button class="sync-code-btn" id="syncCodeBtn" title="See or restore your save code">'+ico("cloud",15)+'<span>Sync Code</span></button>'+
+        '<div class="account-area">'+
+          (authUser
+            ? ('<span class="account-email">'+esc(authUser.email)+'</span>'+
+               '<button class="sync-code-btn" id="logoutBtn">'+ico("logout",15)+'<span>Log Out</span></button>')
+            : ('<button class="sync-code-btn" id="syncCodeBtn" title="See or restore your save code">'+ico("cloud",15)+'<span>Sync Code</span></button>'+
+               '<button class="sync-code-btn" id="loginBtn">'+ico("user",15)+'<span>Log In</span></button>')
+          )+
+        '</div>'+
       '</header>'+
       '<div class="wrap gallery-hero">'+
         '<div class="gallery-hero-copy">'+
@@ -1299,7 +1535,12 @@
 
     document.getElementById("heroNewBtn").onclick = createNewBook;
     document.getElementById("newBookCard").onclick = createNewBook;
-    document.getElementById("syncCodeBtn").onclick = openSyncCodeModal;
+    if (authUser){
+      document.getElementById("logoutBtn").onclick = doLogout;
+    } else {
+      document.getElementById("syncCodeBtn").onclick = openSyncCodeModal;
+      document.getElementById("loginBtn").onclick = function(){ openAuthModal("login"); };
+    }
 
     Array.prototype.forEach.call(document.querySelectorAll("[data-open]"), function(el){
       el.addEventListener("click", function(e){
@@ -2382,27 +2623,144 @@
     }
   }
 
+  /* ---------------- chat assistant ---------------- */
+
+  var chatHistory = [];
+  var chatSending = false;
+
+  function initChatWidget(){
+    var container = document.getElementById("chatWidget");
+    if (!container) return;
+    container.innerHTML =
+      '<button class="chat-fab" id="chatFab" aria-label="Ask a question">'+ico("chatBubble",24)+'</button>'+
+      '<div class="chat-panel" id="chatPanel" hidden>'+
+        '<div class="chat-panel-top">'+
+          '<span class="chat-panel-title">Ask Magic Pen</span>'+
+          '<button class="btn-icon" id="chatCloseBtn" aria-label="Close chat">'+ico("close",15)+'</button>'+
+        '</div>'+
+        '<div class="chat-messages" id="chatMessages"></div>'+
+        '<div class="chat-input-row">'+
+          '<input id="chatInput" placeholder="Ask a question…" maxlength="300" autocomplete="off">'+
+          '<button class="chat-send-btn" id="chatSendBtn" aria-label="Send">'+ico("send",17)+'</button>'+
+        '</div>'+
+      '</div>';
+
+    appendChatBubble("bot", "Hi! I'm here to help with Magic Pen. Ask me things like \"how do I print my book?\" or \"can I add my own photos?\"");
+
+    document.getElementById("chatFab").onclick = openChat;
+    document.getElementById("chatCloseBtn").onclick = closeChat;
+    document.getElementById("chatSendBtn").onclick = sendChatMessage;
+    document.getElementById("chatInput").addEventListener("keydown", function(e){
+      if (e.key === "Enter") sendChatMessage();
+    });
+  }
+
+  function openChat(){
+    document.getElementById("chatPanel").hidden = false;
+    document.getElementById("chatFab").hidden = true;
+    var input = document.getElementById("chatInput");
+    if (input) input.focus();
+  }
+
+  function closeChat(){
+    document.getElementById("chatPanel").hidden = true;
+    document.getElementById("chatFab").hidden = false;
+  }
+
+  function appendChatBubble(role, text, isTyping){
+    var messagesEl = document.getElementById("chatMessages");
+    if (!messagesEl) return null;
+    var bubble = document.createElement("div");
+    bubble.className = "chat-bubble " + (role === "user" ? "chat-bubble-user" : "chat-bubble-bot");
+    if (isTyping){
+      bubble.innerHTML = '<span class="chat-bubble-typing"><span></span><span></span><span></span></span>';
+    } else {
+      bubble.textContent = text;
+    }
+    messagesEl.appendChild(bubble);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return bubble;
+  }
+
+  function sendChatMessage(){
+    if (chatSending) return;
+    var input = document.getElementById("chatInput");
+    var text = input.value.trim();
+    if (!text) return;
+    input.value = "";
+
+    appendChatBubble("user", text);
+    chatHistory.push({ role: "user", content: text });
+    var typingBubble = appendChatBubble("bot", "", true);
+
+    chatSending = true;
+    var sendBtn = document.getElementById("chatSendBtn");
+    if (sendBtn) sendBtn.disabled = true;
+
+    fetch("/api/chat", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text, history: chatHistory.slice(0, -1) })
+    })
+      .then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+      .then(function(result){
+        var reply = result.ok
+          ? result.data.reply
+          : ((result.data && result.data.message) || "Sorry, something went wrong — please try again.");
+        typingBubble.textContent = reply;
+        var messagesEl = document.getElementById("chatMessages");
+        if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
+        chatHistory.push({ role: "assistant", content: reply });
+      })
+      .catch(function(){
+        typingBubble.textContent = "Sorry, I couldn't reach the assistant — please check your connection and try again.";
+      })
+      .finally(function(){
+        chatSending = false;
+        if (sendBtn) sendBtn.disabled = false;
+      });
+  }
+
   /* ---------------- boot ---------------- */
 
   libraryId = getOrCreateLibraryId();
   state.books = loadBooks();
   CUSTOM_STICKERS = loadCustomStickers();
   render();
+  initChatWidget();
 
-  loadLibraryFromServer(libraryId).then(function(data){
-    if (data && Array.isArray(data.books) && data.books.length){
-      if (state.view === "gallery"){
-        state.books = data.books;
-        if (Array.isArray(data.customStickers)) CUSTOM_STICKERS = data.customStickers;
-        try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.books)); } catch(e){}
-        saveCustomStickers();
-        render();
-      }
-    } else if (data === null){
-      // no cloud copy yet under this id — push what we have so the cloud gets initialized
-      syncToServer();
+  apiMe().then(function(user){
+    if (user){
+      authUser = user;
+      if (state.view === "gallery") render(); // show the logged-in header right away
+      return loadMyLibrary().then(function(data){
+        if (data && Array.isArray(data.books) && data.books.length && state.view === "gallery"){
+          state.books = data.books;
+          if (Array.isArray(data.customStickers)) CUSTOM_STICKERS = data.customStickers;
+          try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.books)); } catch(e){}
+          saveCustomStickers();
+          render();
+        }
+      });
     }
-    // data === undefined means the server was unreachable; keep using local data quietly
+
+    // Signed out — fall back to this browser's anonymous Sync Code library.
+    return loadLibraryFromServer(libraryId).then(function(data){
+      if (data && Array.isArray(data.books) && data.books.length){
+        if (state.view === "gallery"){
+          state.books = data.books;
+          if (Array.isArray(data.customStickers)) CUSTOM_STICKERS = data.customStickers;
+          try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.books)); } catch(e){}
+          saveCustomStickers();
+          render();
+        }
+      } else if (data === null){
+        // no cloud copy yet under this id — push what we have so the cloud gets initialized
+        syncToServer();
+      }
+      // data === undefined means the server was unreachable; keep using local data quietly
+    });
   });
 
 })();

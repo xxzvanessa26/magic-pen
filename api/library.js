@@ -1,27 +1,25 @@
-const { MongoClient } = require("mongodb");
+const { getDb } = require("./_lib/db.js");
+const { getSessionFromRequest } = require("./_lib/auth.js");
 
-let clientPromise = null;
-
-function getClient() {
-  if (!clientPromise) {
-    const uri = process.env.MONGODB_URI;
-    if (!uri) throw new Error("MONGODB_URI is not configured");
-    const client = new MongoClient(uri, { maxPoolSize: 5 });
-    clientPromise = client.connect();
-  }
-  return clientPromise;
+// A logged-in user's library is always keyed by their own account id —
+// never by anything the client sends — so one user can never read or
+// overwrite another user's books. Signed-out visitors keep using the
+// anonymous "Sync Code" id they supply themselves.
+function resolveLibraryId(req) {
+  const session = getSessionFromRequest(req);
+  if (session && session.uid) return "user:" + session.uid;
+  const raw = req.method === "GET" ? (req.query && req.query.id) : (req.body && req.body.id);
+  return typeof raw === "string" && raw ? raw : null;
 }
 
 module.exports = async (req, res) => {
   try {
-    const client = await getClient();
-    const col = client.db().collection("libraries");
+    const db = await getDb();
+    const col = db.collection("libraries");
+    const id = resolveLibraryId(req);
 
     if (req.method === "GET") {
-      const id = (req.query && req.query.id) || "";
-      if (!id || typeof id !== "string") {
-        return res.status(400).json({ error: "missing id" });
-      }
+      if (!id) return res.status(400).json({ error: "missing id" });
       const doc = await col.findOne({ _id: id });
       if (!doc) return res.status(404).json({ error: "not found" });
       return res.status(200).json({
@@ -32,11 +30,8 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === "POST") {
+      if (!id) return res.status(400).json({ error: "missing id" });
       const body = req.body || {};
-      const id = body.id;
-      if (!id || typeof id !== "string") {
-        return res.status(400).json({ error: "missing id" });
-      }
       const books = Array.isArray(body.books) ? body.books : [];
       const customStickers = Array.isArray(body.customStickers) ? body.customStickers : [];
       await col.updateOne(
@@ -50,6 +45,7 @@ module.exports = async (req, res) => {
     res.setHeader("Allow", "GET, POST");
     return res.status(405).json({ error: "method not allowed" });
   } catch (e) {
+    console.error("[/api/library]", e);
     return res.status(500).json({ error: "server error" });
   }
 };
