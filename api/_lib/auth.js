@@ -1,6 +1,5 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const cookie = require("cookie");
 
 const SESSION_COOKIE = "mp_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
@@ -44,39 +43,40 @@ function verifySessionToken(token) {
   }
 }
 
+function buildSetCookie(value, maxAgeSeconds) {
+  const parts = [
+    SESSION_COOKIE + "=" + encodeURIComponent(value),
+    "Path=/",
+    "Max-Age=" + maxAgeSeconds,
+    "HttpOnly",
+    "SameSite=Lax"
+  ];
+  if (!isLocalDev()) parts.push("Secure");
+  return parts.join("; ");
+}
+
 function setSessionCookie(res, token) {
-  const serialized = cookie.stringifySetCookie({
-    name: SESSION_COOKIE,
-    value: token,
-    httpOnly: true,
-    secure: !isLocalDev(),
-    sameSite: "lax",
-    path: "/",
-    maxAge: SESSION_MAX_AGE_SECONDS
-  });
-  res.setHeader("Set-Cookie", serialized);
+  res.setHeader("Set-Cookie", buildSetCookie(token, SESSION_MAX_AGE_SECONDS));
 }
 
 function clearSessionCookie(res) {
-  const serialized = cookie.stringifySetCookie({
-    name: SESSION_COOKIE,
-    value: "",
-    httpOnly: true,
-    secure: !isLocalDev(),
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0
-  });
-  res.setHeader("Set-Cookie", serialized);
+  res.setHeader("Set-Cookie", buildSetCookie("", 0));
 }
 
 function getSessionFromRequest(req) {
   const header = req.headers && req.headers.cookie;
   if (!header) return null;
-  const parsed = cookie.parseCookie(header);
-  const token = parsed[SESSION_COOKIE];
-  if (!token) return null;
-  return verifySessionToken(token);
+  const pairs = header.split(";");
+  for (let i = 0; i < pairs.length; i++) {
+    const idx = pairs[i].indexOf("=");
+    if (idx === -1) continue;
+    const name = pairs[i].slice(0, idx).trim();
+    if (name !== SESSION_COOKIE) continue;
+    const token = decodeURIComponent(pairs[i].slice(idx + 1).trim());
+    if (!token) return null;
+    return verifySessionToken(token);
+  }
+  return null;
 }
 
 module.exports = {
