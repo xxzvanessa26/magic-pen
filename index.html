@@ -340,6 +340,7 @@
     display:flex; flex-direction:column; align-items:center; gap:8px; color:rgba(36,28,48,.38);
     font-family:var(--font-body); font-weight:700; font-size:.85rem; text-align:center; padding:0 20px;
   }
+  .scene-empty-upload{ width:auto; max-width:180px; padding:8px 14px; font-size:.78rem; margin-top:2px; }
   .text-zone{ flex:1; position:relative; padding:14px 20px 18px; display:flex; }
   .story-text{
     width:100%; resize:none; border:none; background:transparent; outline:none;
@@ -1754,7 +1755,9 @@
         '<div class="photo-hint">'+ico("moveVertical",14)+'Drag to reposition</div>'
       : (page.sceneEmoji
           ? '<span class="scene-emoji" id="sceneEmojiEl" style="transform:scale('+photoScale(page)+');">'+page.sceneEmoji+'</span>'
-          : '<div class="scene-empty">'+ico("image",22)+'This page needs a picture!<br>Open the Scene tab to add one.</div>');
+          : '<div class="scene-empty">'+ico("image",22)+'This page needs a picture!<br>Open the Scene tab, or<br>'+
+              '<button class="upload-btn scene-empty-upload" id="sceneEmptyUploadBtn">'+ico("upload",15)+'<span>Upload a Photo</span></button>'+
+            '</div>');
 
     var stickerHtml = page.stickers.map(function(s){
       var sel = s.id === state.selectedStickerId;
@@ -1799,6 +1802,12 @@
       st.addEventListener("focus", function(){ snapshotBook(); }, { once: true });
       st.addEventListener("input", function(){ page.text = st.value; saveBooks(); });
     }
+
+    var sceneEmptyUploadBtn = document.getElementById("sceneEmptyUploadBtn");
+    if (sceneEmptyUploadBtn) sceneEmptyUploadBtn.onclick = function(e){
+      e.stopPropagation();
+      ensureFileInput().click();
+    };
 
     bindStickerDrag(canvasEl, page);
     bindPhotoDrag(canvasEl, page);
