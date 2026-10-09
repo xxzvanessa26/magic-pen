@@ -3,9 +3,16 @@
   "private": true,
   "version": "1.0.0",
   "description": "Magic Pen — a simple storybook maker for kids, with cloud sync.",
+  "scripts": {
+    "build:vendor": "esbuild vendor-src/blob-client-entry.js --bundle --platform=browser --format=iife --minify --target=es2019 --inject:vendor-src/process-shim.js --outfile=vendor/vercel-blob-client.js"
+  },
   "dependencies": {
+    "@vercel/blob": "^2.8.1",
     "bcryptjs": "^3.0.3",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^6.10.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }

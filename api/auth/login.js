@@ -1,5 +1,5 @@
 const { getDb } = require("../_lib/db.js");
-const { isValidEmail, verifyPassword, signSession, setSessionCookie } = require("../_lib/auth.js");
+const { isValidEmail, verifyPassword, signSession, setSessionCookie, isAdminEmail } = require("../_lib/auth.js");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
@@ -32,7 +32,9 @@ module.exports = async (req, res) => {
     const token = signSession(user);
     setSessionCookie(res, token);
 
-    return res.status(200).json({ user: { id: String(user._id), email: user.email, name: user.name || "" } });
+    return res.status(200).json({
+      user: { id: String(user._id), email: user.email, name: user.name || "", isAdmin: isAdminEmail(user.email) }
+    });
   } catch (e) {
     console.error("[/api/auth/login]", e);
     return res.status(500).json({ error: "server_error", message: "Something went wrong — please try again." });

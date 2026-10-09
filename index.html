@@ -138,6 +138,27 @@
   .how-step p{ margin:0; font-size:.94rem; color:var(--cream-soft); line-height:1.55; max-width:34ch; }
   @media (max-width:700px){ .how-grid{ grid-template-columns:1fr; gap:28px; } .book-menu{ opacity:1; transform:none; } }
 
+  /* ---------- showcase video ---------- */
+  .showcase-section{ padding:48px 0 8px; }
+  .showcase-section h2{ font-size:2rem; color:var(--cream); font-weight:600; margin:0 0 20px; text-align:center; }
+  .showcase-video-wrap{
+    max-width:760px; margin:0 auto; border-radius:20px; overflow:hidden;
+    box-shadow:var(--shadow-3), 0 30px 40px -20px rgba(0,0,0,.55); background:#000;
+  }
+  .showcase-video-wrap video{ width:100%; display:block; max-height:70vh; }
+  .showcase-admin-box{
+    max-width:760px; margin:18px auto 0; padding:16px 18px; border-radius:16px;
+    border:1.5px dashed var(--cloth-line); display:flex; flex-wrap:wrap; align-items:center; gap:12px;
+    justify-content:center; text-align:center;
+  }
+  .showcase-admin-box p{ width:100%; margin:0 0 2px; color:var(--cream-soft); font-size:.86rem; }
+  .showcase-remove-btn{
+    background:none; border:none; color:var(--gold-soft); font-size:.84rem; text-decoration:underline;
+    cursor:pointer; font-family:var(--font-body);
+  }
+  .showcase-progress{ width:100%; max-width:300px; height:8px; border-radius:999px; background:rgba(247,239,220,.14); overflow:hidden; margin:4px auto 0; }
+  .showcase-progress-bar{ height:100%; background:var(--gold); border-radius:999px; transition:width .15s ease; width:0%; }
+
   .shelf-head{ padding:20px 0 0; }
   .shelf-head h2{ font-size:2rem; color:var(--cream); font-weight:600; }
 
@@ -686,12 +707,16 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="/vendor/vercel-blob-client.js"></script>
 <script>
 (function(){
   "use strict";
 
   var STORAGE_KEY = "paperTales.books.v4";
   var fileInput = null;
+  var showcaseFileInput = null;
+  var showcaseVideoUrl = null;
+  var showcaseUploading = false;
 
   /* ---------------- cloud sync (MongoDB, via /api/library) ---------------- */
 
@@ -1536,6 +1561,7 @@
         '</div>'+
         '<div class="gallery-hero-art">'+heroMockupHtml+'</div>'+
       '</div>'+
+      renderShowcaseSectionHtml()+
       '<div class="wrap how-section">'+
         '<h2>How It Works</h2>'+
         '<div class="how-grid">'+
@@ -1554,6 +1580,7 @@
 
     document.getElementById("heroNewBtn").onclick = createNewBook;
     document.getElementById("newBookCard").onclick = createNewBook;
+    bindShowcaseEvents();
     if (authUser){
       document.getElementById("logoutBtn").onclick = doLogout;
     } else {
@@ -2771,6 +2798,120 @@
       });
   }
 
+  /* ---------------- showcase video (homepage, owner-only upload) ---------------- */
+
+  function fetchShowcaseVideo(){
+    return fetch("/api/showcase", { credentials: "same-origin" })
+      .then(function(r){ return r.ok ? r.json() : { url: null }; })
+      .then(function(data){ showcaseVideoUrl = data.url || null; })
+      .catch(function(){ showcaseVideoUrl = null; });
+  }
+
+  function renderShowcaseSectionHtml(){
+    var isAdmin = !!(authUser && authUser.isAdmin);
+    if (!showcaseVideoUrl && !isAdmin) return "";
+
+    var videoHtml = showcaseVideoUrl
+      ? '<div class="showcase-video-wrap"><video id="showcaseVideoEl" controls playsinline preload="metadata" src="'+esc(showcaseVideoUrl)+'"></video></div>'
+      : '';
+
+    var adminHtml = isAdmin ? (
+      '<div class="showcase-admin-box">'+
+        '<p>Only you can see this upload control — visitors just see the video.</p>'+
+        '<button class="btn btn-outline" id="showcaseUploadBtn">'+ico("upload",16)+'<span>'+(showcaseVideoUrl ? "Replace Video" : "Upload a Showcase Video")+'</span></button>'+
+        (showcaseVideoUrl ? '<button class="showcase-remove-btn" id="showcaseRemoveBtn">Remove video</button>' : '')+
+        '<div class="showcase-progress" id="showcaseProgressWrap" hidden><div class="showcase-progress-bar" id="showcaseProgressBar"></div></div>'+
+      '</div>'
+    ) : '';
+
+    return (
+      '<div class="wrap showcase-section">'+
+        '<h2>See Magic Pen in Action</h2>'+
+        videoHtml + adminHtml +
+      '</div>'
+    );
+  }
+
+  function ensureShowcaseFileInput(){
+    if (showcaseFileInput) return showcaseFileInput;
+    showcaseFileInput = document.createElement("input");
+    showcaseFileInput.type = "file";
+    showcaseFileInput.accept = "video/mp4,video/webm,video/quicktime,video/x-m4v";
+    showcaseFileInput.style.display = "none";
+    document.body.appendChild(showcaseFileInput);
+    showcaseFileInput.addEventListener("change", function(){
+      var file = showcaseFileInput.files && showcaseFileInput.files[0];
+      if (file) startShowcaseUpload(file);
+      showcaseFileInput.value = "";
+    });
+    return showcaseFileInput;
+  }
+
+  function startShowcaseUpload(file){
+    if (showcaseUploading) return;
+    if (!window.VercelBlobUpload){
+      showToast("The upload tool didn't load — try refreshing the page.");
+      return;
+    }
+    showcaseUploading = true;
+    var progressWrap = document.getElementById("showcaseProgressWrap");
+    var progressBar = document.getElementById("showcaseProgressBar");
+    if (progressWrap) progressWrap.hidden = false;
+
+    var ext = (file.name.split(".").pop() || "mp4").toLowerCase();
+    var pathname = "showcase/video-" + Date.now() + "." + ext;
+
+    window.VercelBlobUpload(pathname, file, {
+      access: "public",
+      handleUploadUrl: "/api/showcase/upload",
+      contentType: file.type || "video/mp4",
+      onUploadProgress: function(p){
+        if (progressBar) progressBar.style.width = Math.round(p.percentage) + "%";
+      }
+    }).then(function(blob){
+      return fetch("/api/showcase", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: blob.url })
+      }).then(function(r){
+        if (!r.ok) throw new Error("save failed");
+        return r.json();
+      });
+    }).then(function(data){
+      showcaseVideoUrl = data.url;
+      showToast("Showcase video is live!");
+      render();
+    }).catch(function(e){
+      console.error("[showcase upload]", e);
+      showToast("Sorry, the video upload didn't work. Please try again.");
+    }).finally(function(){
+      showcaseUploading = false;
+    });
+  }
+
+  function removeShowcaseVideo(){
+    showModal({
+      icon: "trash",
+      title: "Remove the showcase video?",
+      body: "Visitors won't see a video on the homepage anymore until you upload a new one.",
+      confirmLabel: "Yes, remove it",
+      confirmClass: "btn-danger",
+      onConfirm: function(){
+        fetch("/api/showcase", { method: "DELETE", credentials: "same-origin" })
+          .then(function(){ showcaseVideoUrl = null; render(); showToast("Showcase video removed."); })
+          .catch(function(){ showToast("Something went wrong — please try again."); });
+      }
+    });
+  }
+
+  function bindShowcaseEvents(){
+    var uploadBtn = document.getElementById("showcaseUploadBtn");
+    if (uploadBtn) uploadBtn.onclick = function(){ ensureShowcaseFileInput().click(); };
+    var removeBtn = document.getElementById("showcaseRemoveBtn");
+    if (removeBtn) removeBtn.onclick = removeShowcaseVideo;
+  }
+
   /* ---------------- boot ---------------- */
 
   libraryId = getOrCreateLibraryId();
@@ -2778,6 +2919,10 @@
   CUSTOM_STICKERS = loadCustomStickers();
   render();
   initChatWidget();
+
+  fetchShowcaseVideo().then(function(){
+    if (state.view === "gallery") render();
+  });
 
   apiMe().then(function(user){
     if (user){

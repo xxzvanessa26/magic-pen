@@ -1,5 +1,5 @@
 const { getDb } = require("../_lib/db.js");
-const { isValidEmail, hashPassword, signSession, setSessionCookie } = require("../_lib/auth.js");
+const { isValidEmail, hashPassword, signSession, setSessionCookie, isAdminEmail } = require("../_lib/auth.js");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
@@ -36,7 +36,9 @@ module.exports = async (req, res) => {
     const token = signSession(user);
     setSessionCookie(res, token);
 
-    return res.status(201).json({ user: { id: String(result.insertedId), email: email, name: name } });
+    return res.status(201).json({
+      user: { id: String(result.insertedId), email: email, name: name, isAdmin: isAdminEmail(email) }
+    });
   } catch (e) {
     if (e && e.code === 11000) {
       return res.status(409).json({ error: "email_taken", message: "An account with that email already exists." });

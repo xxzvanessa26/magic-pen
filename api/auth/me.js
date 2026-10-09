@@ -1,6 +1,6 @@
 const { ObjectId } = require("mongodb");
 const { getDb } = require("../_lib/db.js");
-const { getSessionFromRequest } = require("../_lib/auth.js");
+const { getSessionFromRequest, isAdminEmail } = require("../_lib/auth.js");
 
 module.exports = async (req, res) => {
   if (req.method !== "GET") {
@@ -21,7 +21,9 @@ module.exports = async (req, res) => {
     }
     if (!user) return res.status(200).json({ user: null });
 
-    return res.status(200).json({ user: { id: String(user._id), email: user.email, name: user.name || "" } });
+    return res.status(200).json({
+      user: { id: String(user._id), email: user.email, name: user.name || "", isAdmin: isAdminEmail(user.email) }
+    });
   } catch (e) {
     return res.status(200).json({ user: null });
   }

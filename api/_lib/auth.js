@@ -21,6 +21,16 @@ function isValidEmail(email) {
   return typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function isAdminEmail(email) {
+  const adminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+  if (!adminEmail || !email) return false;
+  return String(email).trim().toLowerCase() === adminEmail;
+}
+
+function isAdminSession(session) {
+  return !!session && isAdminEmail(session.email);
+}
+
 async function hashPassword(plain) {
   return bcrypt.hash(plain, 10);
 }
@@ -81,6 +91,8 @@ function getSessionFromRequest(req) {
 
 module.exports = {
   isValidEmail,
+  isAdminEmail,
+  isAdminSession,
   hashPassword,
   verifyPassword,
   signSession,
