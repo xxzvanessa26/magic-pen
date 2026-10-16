@@ -104,30 +104,41 @@
   .hero-badge svg{ color:var(--gold); flex:none; }
   .gallery-hero-art{ flex:0 0 auto; display:flex; justify-content:center; padding:10px 24px; }
 
-  /* ---------- book mockup (hardcover product-shot look) ---------- */
-  .book-mockup{ position:relative; width:230px; transform:rotate(-3deg); transition:transform .25s ease; }
-  .book-mockup:hover{ transform:rotate(-1deg) translateY(-4px); }
-  .book-mockup .stack-edge{ position:absolute; inset:0; border-radius:4px 16px 16px 4px; box-shadow:var(--shadow-1); }
-  .book-mockup .se1{ background:var(--paper); transform:translate(6px,7px); }
-  .book-mockup .se2{ background:#EDE1C6; transform:translate(12px,13px); }
-  .book-mockup .cover-face{
-    position:relative; z-index:2; aspect-ratio:3/4; border-radius:4px 16px 16px 4px;
-    box-shadow:var(--shadow-3); overflow:hidden; display:flex; flex-direction:column;
-    background:var(--paper-white);
+  /* ---------- mascot (hero art) ---------- */
+  .mascot-wrap{ display:flex; flex-direction:column; align-items:center; gap:16px; width:230px; }
+  .mascot-art{ width:170px; filter:drop-shadow(0 16px 20px rgba(0,0,0,.35)); animation:mascotBob 3.2s ease-in-out infinite; }
+  @keyframes mascotBob{ 0%,100%{ transform:translateY(0) rotate(-2deg); } 50%{ transform:translateY(-10px) rotate(2deg); } }
+  .mascot-bubble{
+    background:var(--paper-white); color:var(--ink); font-family:var(--font-body); font-weight:700;
+    font-size:.92rem; padding:12px 16px; border-radius:16px; position:relative; text-align:center;
+    box-shadow:var(--shadow-2); max-width:220px;
   }
-  .book-mockup .cover-face::before{
-    content:''; position:absolute; left:0; top:0; bottom:0; width:14%; z-index:4; pointer-events:none;
-    background:linear-gradient(90deg, rgba(0,0,0,.28), rgba(0,0,0,0));
+  .mascot-bubble::after{
+    content:''; position:absolute; left:50%; bottom:-9px; transform:translateX(-50%);
+    border-width:9px 8px 0; border-style:solid; border-color:var(--paper-white) transparent transparent;
   }
-  .book-mockup .cover-face::after{
-    content:''; position:absolute; left:14%; top:0; bottom:0; width:2px; z-index:4; pointer-events:none;
-    background:rgba(255,255,255,.4);
+  .mascot-bubble svg{ display:inline; vertical-align:-2px; color:var(--gold-deep); }
+
+  /* ---------- story ideas gallery ---------- */
+  .ideas-section{ padding:20px 0 8px; }
+  .ideas-section h2{ font-size:2rem; color:var(--cream); font-weight:600; margin:0 0 10px; }
+  .ideas-sub{ color:var(--cream-soft); font-size:.98rem; margin:0 0 26px; max-width:60ch; line-height:1.6; }
+  .ideas-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
+  @media (max-width:860px){ .ideas-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:480px){ .ideas-grid{ grid-template-columns:1fr; } }
+  .idea-card{
+    border:none; border-radius:18px; padding:20px 16px 18px; cursor:pointer; text-align:left;
+    display:flex; flex-direction:column; gap:10px; box-shadow:var(--shadow-2);
+    transition:transform .15s ease, box-shadow .15s ease; font-family:var(--font-body);
   }
-  .book-mockup .ground-shadow{
-    position:absolute; left:6%; right:0; bottom:-18px; height:22px; z-index:0;
-    background:radial-gradient(ellipse at center, rgba(0,0,0,.48), transparent 72%); filter:blur(4px);
+  .idea-card:hover{ transform:translateY(-4px); box-shadow:var(--shadow-3); }
+  .idea-card:active{ transform:translateY(-1px) scale(.98); }
+  .idea-tag{
+    align-self:flex-start; font-size:.68rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+    color:var(--cloth-deep); background:rgba(255,255,255,.55); padding:3px 9px; border-radius:999px;
   }
-  .hero-mockup{ width:290px; }
+  .idea-emoji{ font-size:2.6rem; line-height:1; }
+  .idea-title{ font-family:var(--font-display); font-weight:600; font-size:1.05rem; color:var(--ink); line-height:1.3; }
 
   /* ---------- how it works (editorial numbered list, no cards) ---------- */
   .how-section{ padding:64px 0 8px; }
@@ -965,6 +976,34 @@
     return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICON_PATHS[name]||"")+'</svg>';
   }
 
+  var MASCOT_SVG =
+    '<svg viewBox="0 0 220 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Inky, the Magic Pen mascot">'+
+      '<defs>'+
+        '<symbol id="inkyStar" viewBox="-1 -1 2 2"><polygon points="0,-1 0.28,-0.28 1,0 0.28,0.28 0,1 -0.28,0.28 -1,0 -0.28,-0.28"/></symbol>'+
+      '</defs>'+
+      '<ellipse cx="108" cy="252" rx="54" ry="10" fill="#000" opacity=".14"/>'+
+      '<use href="#inkyStar" x="166" y="24" width="22" height="22" fill="#E2A93E" opacity=".9"/>'+
+      '<use href="#inkyStar" x="14" y="70" width="14" height="14" fill="#F0C876" opacity=".85"/>'+
+      '<use href="#inkyStar" x="178" y="96" width="10" height="10" fill="#F0C876" opacity=".8"/>'+
+      '<path d="M76 236 L94 198 L122 198 L140 236 Z" fill="#E8C99B"/>'+
+      '<path d="M100 198 L116 198 L108 236 Z" fill="#241C30"/>'+
+      '<path d="M84 76 C84 65 95 58 108 58 C121 58 132 65 132 76 L132 206 L84 206 Z" fill="#E2A93E"/>'+
+      '<path d="M84 76 C84 65 95 58 108 58 C121 58 132 65 132 76 L132 92 L84 92 Z" fill="#F0C876"/>'+
+      '<rect x="80" y="40" width="56" height="34" rx="10" fill="#F3B9A8"/>'+
+      '<rect x="80" y="40" width="56" height="12" rx="6" fill="#F7D3C6"/>'+
+      '<path d="M49 150 C34 150 26 162 30 176 C33 186 44 190 52 184" fill="none" stroke="#BD8226" stroke-width="7" stroke-linecap="round"/>'+
+      '<circle cx="53" cy="184" r="8" fill="#F0C876" stroke="#BD8226" stroke-width="3"/>'+
+      '<path d="M167 146 C182 140 196 148 196 163 C196 174 186 182 175 179" fill="none" stroke="#BD8226" stroke-width="7" stroke-linecap="round"/>'+
+      '<circle cx="178" cy="178" r="8" fill="#F0C876" stroke="#BD8226" stroke-width="3"/>'+
+      '<circle cx="93" cy="130" r="10" fill="#FBF4E6"/>'+
+      '<circle cx="123" cy="130" r="10" fill="#FBF4E6"/>'+
+      '<circle cx="95" cy="131" r="4.2" fill="#241C30"/>'+
+      '<circle cx="125" cy="131" r="4.2" fill="#241C30"/>'+
+      '<circle cx="82" cy="146" r="7" fill="#B14432" opacity=".35"/>'+
+      '<circle cx="134" cy="146" r="7" fill="#B14432" opacity=".35"/>'+
+      '<path d="M94 152 Q108 164 122 152" fill="none" stroke="#241C30" stroke-width="4" stroke-linecap="round"/>'+
+    '</svg>';
+
   var MAGIC_PEN_LOGO_SVG =
     '<svg viewBox="0 0 520 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Magic Pen logo">'+
       '<defs>'+
@@ -1024,6 +1063,13 @@
       '</text>'+
       '<path d="M175,438 Q260,458 345,438" fill="none" stroke="#E8B23D" stroke-width="5" stroke-linecap="round"/>'+
     '</svg>';
+
+  var STORY_IDEAS = [
+    { title: "The Dragon Who Loved Pancakes", emoji: "🐉", bg: "#F6D3B8" },
+    { title: "My Dog Thinks He's a Superhero", emoji: "🦸", bg: "#C7DEF0" },
+    { title: "The Secret Under My Bed", emoji: "👾", bg: "#DCCBEE" },
+    { title: "Astro Cat Saves the Moon", emoji: "🚀", bg: "#C3E6D2" }
+  ];
 
   var BG_COLORS = [
     {name:"Cream", value:"#FBF4E6"},
@@ -1508,27 +1554,14 @@
     }).join("");
 
     var emptyMsg = state.books.length === 0
-      ? '<div class="empty-shelf">'+ico("book",42)+'<p>Your bookshelf is empty! Tap "Start a New Book" below and write your very first story.</p></div>'
+      ? '<div class="empty-shelf">'+ico("book",42)+'<p>Your bookshelf is empty! Tap "Create My Book" below and write your very first story.</p></div>'
       : '';
 
-    var featured = state.books[0];
-    var featuredCover = featured ? (featured.pages[0] || {}) : null;
-    var heroMockupHtml = featured
-      ? (
-          '<div class="book-mockup hero-mockup">'+
-            '<div class="ground-shadow"></div>'+
-            '<div class="stack-edge se2"></div>'+
-            '<div class="stack-edge se1"></div>'+
-            '<div class="cover-face" style="background:'+featuredCover.bg+'">'+
-              '<div class="book-cover" style="flex:1;background:transparent;">'+sceneFillHtml(featuredCover, "Cover of "+(featured.title||"your book"))+'</div>'+
-              '<div style="padding:12px 16px 16px;text-align:center;">'+
-                '<div style="font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--ink);line-height:1.2;">'+esc(featured.title||"Untitled Book")+'</div>'+
-                '<div style="font-family:var(--font-hand);font-size:1.05rem;color:var(--ink-soft);">'+esc(featured.author||"by You")+'</div>'+
-              '</div>'+
-            '</div>'+
-          '</div>'
-        )
-      : '';
+    var heroMockupHtml =
+      '<div class="mascot-wrap">'+
+        '<div class="mascot-bubble">Hi, I\'m Inky! Let\'s make something magical. '+ico("star",15)+'</div>'+
+        '<div class="mascot-art">'+MASCOT_SVG+'</div>'+
+      '</div>';
 
     app.innerHTML =
       '<header class="wrap topline">'+
@@ -1550,9 +1583,9 @@
       '</header>'+
       '<div class="wrap gallery-hero">'+
         '<div class="gallery-hero-copy">'+
-          '<h2>Write a story. Add pictures.<br><em>Hold it in your hands.</em></h2>'+
+          '<h2>Your Imagination. Your Story.<br><em>Your Very Own Book!</em></h2>'+
           '<p>This is your own little library, saved right here on this device. Dream up anything — a pet\'s secret life, a trip to outer space, a silly adventure with your best friend. Decorate every page, then print your finished book at CVS Photo and hold your very own story.</p>'+
-          '<button class="btn btn-primary" id="heroNewBtn">'+ico("plus",18)+'<span>Start a New Book</span></button>'+
+          '<button class="btn btn-primary" id="heroNewBtn">'+ico("plus",18)+'<span>Create My Book</span></button>'+
           '<div class="hero-badges">'+
             '<span class="hero-badge">'+ico("check",15)+'No account needed</span>'+
             '<span class="hero-badge">'+ico("check",15)+'Saves automatically</span>'+
@@ -1561,6 +1594,7 @@
         '</div>'+
         '<div class="gallery-hero-art">'+heroMockupHtml+'</div>'+
       '</div>'+
+      renderStoryIdeasHtml()+
       renderShowcaseSectionHtml()+
       '<div class="wrap how-section">'+
         '<h2>How It Works</h2>'+
@@ -1573,14 +1607,19 @@
       '<div class="wrap shelf-head"><h2>Your Bookshelf</h2></div>'+
       '<div class="wrap shelf">'+
         emptyMsg + cards+
-        '<div class="new-book-card" id="newBookCard" tabindex="0" role="button" aria-label="Start a new book">'+
-          '<div class="plus-circle">'+ico("plus",22)+'</div><span>Start a New Book</span>'+
+        '<div class="new-book-card" id="newBookCard" tabindex="0" role="button" aria-label="Create my book">'+
+          '<div class="plus-circle">'+ico("plus",22)+'</div><span>Create My Book</span>'+
         '</div>'+
       '</div>';
 
     document.getElementById("heroNewBtn").onclick = createNewBook;
     document.getElementById("newBookCard").onclick = createNewBook;
     bindShowcaseEvents();
+    Array.prototype.forEach.call(document.querySelectorAll("[data-idea]"), function(el){
+      el.addEventListener("click", function(){
+        createNewBookFromIdea(STORY_IDEAS[Number(el.getAttribute("data-idea"))]);
+      });
+    });
     if (authUser){
       document.getElementById("logoutBtn").onclick = doLogout;
     } else {
@@ -1610,6 +1649,36 @@
     state.books.unshift(b);
     saveBooks(true);
     openBook(b.id);
+  }
+
+  function renderStoryIdeasHtml(){
+    var cards = STORY_IDEAS.map(function(idea, i){
+      return (
+        '<button class="idea-card" data-idea="'+i+'" style="background:'+idea.bg+'">'+
+          '<span class="idea-tag">Story Idea</span>'+
+          '<span class="idea-emoji">'+idea.emoji+'</span>'+
+          '<span class="idea-title">'+esc(idea.title)+'</span>'+
+        '</button>'
+      );
+    }).join("");
+    return (
+      '<div class="wrap ideas-section">'+
+        '<h2>See What You Could Create</h2>'+
+        '<p class="ideas-sub">Tap a story idea to start your own book with it — or dream up something completely different!</p>'+
+        '<div class="ideas-grid">'+cards+'</div>'+
+      '</div>'
+    );
+  }
+
+  function createNewBookFromIdea(idea){
+    var b = {
+      id: uid(), title: idea.title, author: "", updatedAt: Date.now(),
+      pages: [mkPage(idea.bg, idea.emoji), blankPage("#F5E6A8"), blankPage("#F6D3B8")]
+    };
+    state.books.unshift(b);
+    saveBooks(true);
+    openBook(b.id);
+    showToast("Great pick! Make it your own.");
   }
 
   function duplicateBook(id){
