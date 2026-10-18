@@ -22,6 +22,12 @@ async function getDb() {
     db.collection("users")
       .createIndex({ email: 1 }, { unique: true })
       .catch(function () {});
+    db.collection("passwordResets")
+      .createIndex({ tokenHash: 1 }, { unique: true })
+      .catch(function () {});
+    db.collection("passwordResets")
+      .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 })
+      .catch(function () {});
   }
   return db;
 }

@@ -573,6 +573,8 @@
   .auth-submit-btn:disabled{ opacity:.6; cursor:not-allowed; }
   .auth-toggle{ font-size:.82rem; color:var(--ink-soft); margin:14px 0 18px; }
   .auth-toggle a{ color:var(--cloth-deep); font-weight:700; text-decoration:underline; }
+  .auth-forgot-link{ font-size:.8rem; margin:-6px 0 0; text-align:right; }
+  .auth-forgot-link a{ color:var(--ink-soft); text-decoration:underline; }
   .auth-close-btn{ width:100%; justify-content:center; }
 
   .account-area{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
@@ -792,6 +794,7 @@
   /* ---------------- account auth ---------------- */
 
   var authUser = null; // {id, email, name} or null when signed out
+  var pendingResetToken = null; // set at boot if the URL carried ?reset=<token>
 
   function apiMe(){
     return fetch("/api/auth/me", { credentials: "same-origin" })
@@ -828,6 +831,32 @@
 
   function apiLogout(){
     return fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" }).catch(function(){});
+  }
+
+  function apiForgotPassword(email){
+    return fetch("/api/auth/forgot-password", {
+      method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email })
+    }).then(function(r){
+      return r.json().then(function(data){
+        if (!r.ok) throw { message: (data && data.message) || "Something went wrong." };
+        return data;
+      });
+    });
+  }
+
+  function apiResetPassword(token, password){
+    return fetch("/api/auth/reset-password", {
+      method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: token, password: password })
+    }).then(function(r){
+      return r.json().then(function(data){
+        if (!r.ok) throw { message: (data && data.message) || "Something went wrong." };
+        return data.user;
+      });
+    });
   }
 
   function loadMyLibrary(){
@@ -883,6 +912,9 @@
   }
 
   function renderAuthModalBody(overlay, mode, errorMsg){
+    if (mode === "forgot") { renderForgotPasswordBody(overlay, errorMsg); return; }
+    if (mode === "reset") { renderResetPasswordBody(overlay, errorMsg); return; }
+
     var isSignup = mode === "signup";
     overlay.innerHTML =
       '<div class="modal-card auth-card">'+
@@ -891,6 +923,7 @@
         (errorMsg ? '<div class="auth-error">'+esc(errorMsg)+'</div>' : '')+
         '<input class="draw-label-input" id="authEmail" type="email" placeholder="Parent\'s email address" autocomplete="email">'+
         '<input class="draw-label-input" id="authPassword" type="password" placeholder="'+(isSignup ? "Password (at least 8 characters)" : "Password")+'" autocomplete="'+(isSignup ? "new-password" : "current-password")+'">'+
+        (isSignup ? '' : '<p class="auth-forgot-link"><a href="#" id="authForgotLink">Forgot password?</a></p>')+
         '<button class="btn btn-primary auth-submit-btn" id="authSubmitBtn">'+(isSignup ? "Sign Up" : "Log In")+'</button>'+
         '<p class="auth-toggle">'+(isSignup ? "Already have an account? " : "New here? ")+'<a href="#" id="authToggleLink">'+(isSignup ? "Log In" : "Create one")+'</a></p>'+
         '<button class="btn btn-ghost auth-close-btn" id="authCloseBtn">Cancel</button>'+
@@ -900,6 +933,11 @@
     document.getElementById("authToggleLink").onclick = function(e){
       e.preventDefault();
       renderAuthModalBody(overlay, isSignup ? "login" : "signup", "");
+    };
+    var forgotLink = document.getElementById("authForgotLink");
+    if (forgotLink) forgotLink.onclick = function(e){
+      e.preventDefault();
+      renderAuthModalBody(overlay, "forgot", "");
     };
     document.getElementById("authPassword").addEventListener("keydown", function(e){
       if (e.key === "Enter") document.getElementById("authSubmitBtn").click();
@@ -930,6 +968,96 @@
 
       action.catch(function(err){
         renderAuthModalBody(overlay, mode, (err && err.message) || "Something went wrong — please try again.");
+      });
+    };
+  }
+
+  function renderForgotPasswordBody(overlay, errorMsg){
+    overlay.innerHTML =
+      '<div class="modal-card auth-card">'+
+        '<h3>Reset Your Password</h3>'+
+        '<p>Enter the email on your account and we\'ll start a password reset.</p>'+
+        (errorMsg ? '<div class="auth-error">'+esc(errorMsg)+'</div>' : '')+
+        '<input class="draw-label-input" id="authEmail" type="email" placeholder="Parent\'s email address" autocomplete="email">'+
+        '<button class="btn btn-primary auth-submit-btn" id="authSubmitBtn">Send Reset Link</button>'+
+        '<p class="auth-toggle"><a href="#" id="authToggleLink">Back to Log In</a></p>'+
+        '<button class="btn btn-ghost auth-close-btn" id="authCloseBtn">Cancel</button>'+
+      '</div>';
+
+    document.getElementById("authCloseBtn").onclick = function(){ overlay.remove(); };
+    document.getElementById("authToggleLink").onclick = function(e){
+      e.preventDefault();
+      renderAuthModalBody(overlay, "login", "");
+    };
+    var emailInput = document.getElementById("authEmail");
+    emailInput.addEventListener("keydown", function(e){
+      if (e.key === "Enter") document.getElementById("authSubmitBtn").click();
+    });
+    document.getElementById("authSubmitBtn").onclick = function(){
+      var email = emailInput.value.trim();
+      if (!email){
+        renderForgotPasswordBody(overlay, "Please enter your email address.");
+        return;
+      }
+      var btn = document.getElementById("authSubmitBtn");
+      btn.disabled = true;
+      btn.textContent = "Sending…";
+      apiForgotPassword(email).then(function(){
+        overlay.querySelector(".auth-card").innerHTML =
+          '<h3>Check Back Soon</h3>'+
+          '<p>If an account exists for that email, we\'ve started a password reset. Magic Pen doesn\'t send automatic emails yet — please ask the site owner for your reset link.</p>'+
+          '<button class="btn btn-primary auth-submit-btn" id="authDoneBtn">Okay</button>';
+        document.getElementById("authDoneBtn").onclick = function(){ overlay.remove(); };
+      }).catch(function(err){
+        renderForgotPasswordBody(overlay, (err && err.message) || "Something went wrong — please try again.");
+      });
+    };
+  }
+
+  function renderResetPasswordBody(overlay, errorMsg, tokenInvalid){
+    overlay.innerHTML =
+      '<div class="modal-card auth-card">'+
+        '<h3>Set a New Password</h3>'+
+        '<p>Choose a new password for your account.</p>'+
+        (errorMsg ? '<div class="auth-error">'+esc(errorMsg)+'</div>' : '')+
+        '<input class="draw-label-input" id="authPassword" type="password" placeholder="New password (at least 8 characters)" autocomplete="new-password">'+
+        '<input class="draw-label-input" id="authPassword2" type="password" placeholder="Confirm new password" autocomplete="new-password">'+
+        '<button class="btn btn-primary auth-submit-btn" id="authSubmitBtn"'+(tokenInvalid?' disabled':'')+'>Set New Password</button>'+
+        (tokenInvalid ? '<p class="auth-toggle"><a href="#" id="authToggleLink">Request a new reset link</a></p>' : '')+
+        '<button class="btn btn-ghost auth-close-btn" id="authCloseBtn">Cancel</button>'+
+      '</div>';
+
+    document.getElementById("authCloseBtn").onclick = function(){ overlay.remove(); };
+    var toggleLink = document.getElementById("authToggleLink");
+    if (toggleLink) toggleLink.onclick = function(e){
+      e.preventDefault();
+      renderAuthModalBody(overlay, "forgot", "");
+    };
+    document.getElementById("authPassword2").addEventListener("keydown", function(e){
+      if (e.key === "Enter") document.getElementById("authSubmitBtn").click();
+    });
+    document.getElementById("authSubmitBtn").onclick = function(){
+      var password = document.getElementById("authPassword").value;
+      var password2 = document.getElementById("authPassword2").value;
+      if (password.length < 8){
+        renderResetPasswordBody(overlay, "Password must be at least 8 characters.");
+        return;
+      }
+      if (password !== password2){
+        renderResetPasswordBody(overlay, "Those passwords don't match.");
+        return;
+      }
+      var btn = document.getElementById("authSubmitBtn");
+      btn.disabled = true;
+      btn.textContent = "Saving…";
+      apiResetPassword(pendingResetToken, password).then(function(user){
+        pendingResetToken = null;
+        return onLoginSuccess(user);
+      }).then(function(){
+        overlay.remove();
+        showToast("Password updated! You're logged in.");
+      }).catch(function(err){
+        renderResetPasswordBody(overlay, (err && err.message) || "Something went wrong — please try again.", true);
       });
     };
   }
@@ -2983,11 +3111,23 @@
 
   /* ---------------- boot ---------------- */
 
+  try {
+    var bootParams = new URLSearchParams(window.location.search);
+    var bootResetToken = bootParams.get("reset");
+    if (bootResetToken) {
+      pendingResetToken = bootResetToken;
+      bootParams.delete("reset");
+      var bootSearch = bootParams.toString();
+      window.history.replaceState({}, "", window.location.pathname + (bootSearch ? "?"+bootSearch : "") + window.location.hash);
+    }
+  } catch(e){}
+
   libraryId = getOrCreateLibraryId();
   state.books = loadBooks();
   CUSTOM_STICKERS = loadCustomStickers();
   render();
   initChatWidget();
+  if (pendingResetToken) openAuthModal("reset");
 
   fetchShowcaseVideo().then(function(){
     if (state.view === "gallery") render();
