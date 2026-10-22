@@ -104,11 +104,6 @@
   .hero-badge svg{ color:var(--gold); flex:none; }
   .gallery-hero-art{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:26px; padding:10px 24px; }
 
-  /* ---------- mascot (hero art) ---------- */
-  .mascot-wrap{ display:flex; flex-direction:column; align-items:center; gap:16px; width:230px; }
-  .mascot-art{ width:170px; filter:drop-shadow(0 16px 20px rgba(0,0,0,.35)); animation:mascotBob 3.2s ease-in-out infinite; }
-  @keyframes mascotBob{ 0%,100%{ transform:translateY(0) rotate(-2deg); } 50%{ transform:translateY(-10px) rotate(2deg); } }
-
   /* ---------- story ideas gallery ---------- */
   .ideas-section{ padding:20px 0 8px; }
   .ideas-section h2{ font-size:2rem; color:var(--cream); font-weight:600; margin:0 0 10px; }
@@ -1689,11 +1684,7 @@
       ? '<div class="empty-shelf">'+ico("book",42)+'<p>Your bookshelf is empty! Tap "Create My Book" below and write your very first story.</p></div>'
       : '';
 
-    var heroMockupHtml =
-      '<div class="mascot-wrap">'+
-        '<div class="mascot-art">'+MASCOT_SVG+'</div>'+
-      '</div>'+
-      renderShowcaseBookSectionHtml();
+    var heroMockupHtml = renderShowcaseBookSectionHtml();
 
     app.innerHTML =
       '<header class="wrap topline">'+
