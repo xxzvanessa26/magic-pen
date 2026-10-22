@@ -2747,10 +2747,12 @@
       return '<div class="print-sticker" style="left:'+s.x+'%;top:'+s.y+'%;transform:translate(-50%,-50%) rotate('+s.rot+'deg);">'+stickerContentHtml(s.emoji)+'</div>';
     }).join("");
     var sceneInner = p.photo ? '<img src="'+p.photo+'" style="object-position:'+photoObjPos(p)+';transform:scale('+photoScale(p)+');">' : (p.sceneEmoji ? '<span class="scene-emoji" style="display:inline-block;transform:scale('+photoScale(p)+');">'+p.sceneEmoji+'</span>' : '');
-    if (i === 0){
+    var isCover = i === 0;
+    var flexBasis = sceneFlexBasis(p, isCover);
+    if (isCover){
       return (
         '<div class="print-page" style="background:'+p.bg+'">'+
-          '<div class="print-scene" style="flex:0 0 46%;">'+sceneInner+'</div>'+
+          '<div class="print-scene" style="flex:0 0 '+flexBasis+';">'+sceneInner+'</div>'+
           '<div class="print-cover"><div class="t">'+esc(book.title)+'</div><div class="a">'+esc(book.author)+'</div></div>'+
           stickerHtml+
         '</div>'
@@ -2758,7 +2760,7 @@
     }
     return (
       '<div class="print-page" style="background:'+p.bg+'">'+
-        '<div class="print-scene">'+sceneInner+'</div>'+
+        '<div class="print-scene" style="flex:0 0 '+flexBasis+';">'+sceneInner+'</div>'+
         '<div class="print-text">'+esc(p.text)+'</div>'+
         stickerHtml+
       '</div>'
