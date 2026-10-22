@@ -108,16 +108,6 @@
   .mascot-wrap{ display:flex; flex-direction:column; align-items:center; gap:16px; width:230px; }
   .mascot-art{ width:170px; filter:drop-shadow(0 16px 20px rgba(0,0,0,.35)); animation:mascotBob 3.2s ease-in-out infinite; }
   @keyframes mascotBob{ 0%,100%{ transform:translateY(0) rotate(-2deg); } 50%{ transform:translateY(-10px) rotate(2deg); } }
-  .mascot-bubble{
-    background:var(--paper-white); color:var(--ink); font-family:var(--font-body); font-weight:700;
-    font-size:.92rem; padding:12px 16px; border-radius:16px; position:relative; text-align:center;
-    box-shadow:var(--shadow-2); max-width:220px;
-  }
-  .mascot-bubble::after{
-    content:''; position:absolute; left:50%; bottom:-9px; transform:translateX(-50%);
-    border-width:9px 8px 0; border-style:solid; border-color:var(--paper-white) transparent transparent;
-  }
-  .mascot-bubble svg{ display:inline; vertical-align:-2px; color:var(--gold-deep); }
 
   /* ---------- story ideas gallery ---------- */
   .ideas-section{ padding:20px 0 8px; }
@@ -1701,7 +1691,6 @@
 
     var heroMockupHtml =
       '<div class="mascot-wrap">'+
-        '<div class="mascot-bubble">Hi, I\'m Inky! Let\'s make something magical. '+ico("star",15)+'</div>'+
         '<div class="mascot-art">'+MASCOT_SVG+'</div>'+
       '</div>'+
       renderShowcaseBookSectionHtml();
