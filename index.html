@@ -3248,6 +3248,7 @@
       access: "public",
       handleUploadUrl: "/api/showcase/upload",
       contentType: file.type || "video/mp4",
+      multipart: true, // chunks large files and retries failed parts instead of one fragile request
       onUploadProgress: function(p){
         if (progressBar) progressBar.style.width = Math.round(p.percentage) + "%";
       }
@@ -3267,7 +3268,12 @@
       render();
     }).catch(function(e){
       console.error("[showcase upload]", e);
-      showToast("Sorry, the video upload didn't work. Please try again.");
+      var msg = (e && e.message) ? String(e.message) : "";
+      if (/size|large/i.test(msg)){
+        showToast("That video is too big to upload (max 300MB). Try a shorter or smaller clip.");
+      } else {
+        showToast("Sorry, the video upload didn't work — please check your connection and try again.");
+      }
     }).finally(function(){
       showcaseUploading = false;
     });
