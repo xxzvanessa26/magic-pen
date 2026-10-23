@@ -603,6 +603,7 @@
     flex:1; text-align:center; color:var(--cream); font-family:var(--font-display); font-optical-sizing:auto;
     font-weight:600; font-size:1.1rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:0 8px;
   }
+  .preview-top-actions{ display:flex; align-items:center; gap:8px; flex:none; }
   .preview-stage{
     flex:1; min-height:0; display:flex; align-items:center; justify-content:center; gap:16px; padding:16px;
   }
@@ -2885,8 +2886,6 @@
 
   /* ---------------- preview ---------------- */
 
-  var previewIndex = 0;
-
   function renderPreviewPageInner(book, page, isCover){
     var sceneInner = page.photo
       ? '<img class="scene-photo" alt="" style="object-position:'+photoObjPos(page)+';transform:scale('+photoScale(page)+');" src="'+page.photo+'">'
@@ -2916,86 +2915,17 @@
     );
   }
 
-  function renderPreviewStage(book){
-    var page = book.pages[previewIndex];
-    var isCover = previewIndex === 0;
-    var wrap = document.getElementById("previewPageWrap");
-    if (!wrap) return;
-    wrap.innerHTML = '<div class="page-canvas" style="background:'+page.bg+';">'+renderPreviewPageInner(book, page, isCover)+'</div>';
-
-    var countEl = document.getElementById("previewCount");
-    if (countEl) countEl.textContent = (previewIndex+1) + " of " + book.pages.length;
-    var prevBtn = document.getElementById("previewPrevBtn");
-    if (prevBtn) prevBtn.disabled = previewIndex === 0;
-    var nextBtn = document.getElementById("previewNextBtn");
-    if (nextBtn) nextBtn.disabled = previewIndex === book.pages.length - 1;
-
-    var dotsEl = document.getElementById("previewDots");
-    if (dotsEl){
-      dotsEl.innerHTML = book.pages.map(function(p, i){
-        return '<button class="preview-dot'+(i===previewIndex?' active':'')+'" data-dot="'+i+'" aria-label="Go to page '+(i+1)+'"></button>';
-      }).join("");
-      Array.prototype.forEach.call(dotsEl.querySelectorAll("[data-dot]"), function(el){
-        el.onclick = function(){ previewIndex = parseInt(el.getAttribute("data-dot"), 10); renderPreviewStage(book); };
-      });
-    }
-  }
-
-  function movePreview(book, dir){
-    var next = previewIndex + dir;
-    if (next < 0 || next >= book.pages.length) return;
-    previewIndex = next;
-    renderPreviewStage(book);
-  }
-
-  function previewKeyHandler(e){
-    var book = currentBook();
-    if (!book) return;
-    if (e.key === "Escape") closePreview();
-    else if (e.key === "ArrowLeft") movePreview(book, -1);
-    else if (e.key === "ArrowRight") movePreview(book, 1);
-  }
-
-  function closePreview(){
-    var overlay = document.getElementById("previewOverlay");
-    if (overlay) overlay.remove();
-    document.removeEventListener("keydown", previewKeyHandler);
+  function pageIndexToSpread(i){
+    return i === 0 ? 0 : Math.floor((i-1)/2) + 1;
   }
 
   function openPreview(){
     var book = currentBook();
     if (!book) return;
-    previewIndex = state.currentPageIndex || 0;
-
-    var overlay = document.createElement("div");
-    overlay.className = "preview-overlay";
-    overlay.id = "previewOverlay";
-    overlay.innerHTML =
-      '<div class="preview-top">'+
-        '<button class="btn-icon" id="previewCloseBtn" aria-label="Close preview">'+ico("close",18)+'</button>'+
-        '<div class="preview-title">'+esc(book.title||"Untitled Book")+'</div>'+
-        '<button class="btn-icon" id="previewExportBtn" title="Export as PDF" aria-label="Export as PDF">'+ico("filePdf",18)+'</button>'+
-        '<button class="btn btn-outline" id="previewPrintBtn">'+ico("printer",17)+'<span>Print Book</span></button>'+
-      '</div>'+
-      '<div class="preview-stage">'+
-        '<button class="preview-nav-btn" id="previewPrevBtn" aria-label="Previous page">'+ico("chevronLeft",22)+'</button>'+
-        '<div class="preview-page-wrap" id="previewPageWrap"></div>'+
-        '<button class="preview-nav-btn" id="previewNextBtn" aria-label="Next page">'+ico("chevronRight",22)+'</button>'+
-      '</div>'+
-      '<div class="preview-footer">'+
-        '<div class="preview-dots" id="previewDots"></div>'+
-        '<div class="preview-count" id="previewCount"></div>'+
-      '</div>';
-    document.body.appendChild(overlay);
-    renderPreviewStage(book);
-
-    document.getElementById("previewCloseBtn").onclick = closePreview;
-    document.getElementById("previewPrevBtn").onclick = function(){ movePreview(book, -1); };
-    document.getElementById("previewNextBtn").onclick = function(){ movePreview(book, 1); };
-    document.getElementById("previewPrintBtn").onclick = doPrint;
-    document.getElementById("previewExportBtn").onclick = exportPdf;
-    overlay.addEventListener("click", function(e){ if (e.target === overlay) closePreview(); });
-    document.addEventListener("keydown", previewKeyHandler);
+    openBookPreview(book, {
+      allowPrintExport: true,
+      startSpread: pageIndexToSpread(state.currentPageIndex || 0)
+    });
   }
 
   function buildPrintPageHtml(book, p, i){
@@ -3364,7 +3294,7 @@
     var removeBtn = document.getElementById("showcaseRemoveBtn");
     if (removeBtn) removeBtn.onclick = removeShowcaseVideo;
     var readBtn = document.getElementById("readSampleBtn");
-    if (readBtn) readBtn.onclick = function(){ if (showcaseBook) openPublicPreview(showcaseBook); };
+    if (readBtn) readBtn.onclick = function(){ if (showcaseBook) openBookPreview(showcaseBook, { allowPrintExport: false }); };
     var bookRemoveBtn = document.getElementById("showcaseBookRemoveBtn");
     if (bookRemoveBtn) bookRemoveBtn.onclick = removeShowcaseBook;
   }
@@ -3448,10 +3378,12 @@
     });
   }
 
-  function openPublicPreview(book){
+  function openBookPreview(book, opts){
+    opts = opts || {};
+    var allowPrintExport = !!opts.allowPrintExport;
     var storyPages = book.pages.slice(1);
     var spreadCount = 1 + Math.ceil(storyPages.length / 2); // 1 = cover, then two-page spreads
-    var spreadIdx = 0;
+    var spreadIdx = Math.max(0, Math.min(spreadCount - 1, opts.startSpread || 0));
     var playing = true;
     var timer = null;
     var animating = false;
@@ -3463,7 +3395,11 @@
       '<div class="preview-top">'+
         '<button class="btn-icon" id="previewCloseBtn" aria-label="Close preview">'+ico("close",18)+'</button>'+
         '<div class="preview-title">'+esc(book.title||"Untitled Book")+'</div>'+
-        '<button class="btn-icon" id="previewPlayBtn" aria-label="Pause slideshow">'+ico("pause",18)+'</button>'+
+        '<div class="preview-top-actions">'+
+          (allowPrintExport ? '<button class="btn-icon" id="previewExportBtn" title="Export as PDF" aria-label="Export as PDF">'+ico("filePdf",18)+'</button>' : '')+
+          (allowPrintExport ? '<button class="btn-icon" id="previewPrintBtn" title="Print Book" aria-label="Print Book">'+ico("printer",18)+'</button>' : '')+
+          '<button class="btn-icon" id="previewPlayBtn" aria-label="Pause slideshow">'+ico("pause",18)+'</button>'+
+        '</div>'+
       '</div>'+
       '<div class="preview-stage">'+
         '<button class="preview-nav-btn" id="previewPrevBtn" aria-label="Previous page">'+ico("chevronLeft",22)+'</button>'+
@@ -3619,6 +3555,10 @@
     document.getElementById("previewPlayBtn").onclick = function(){ setPlaying(!playing); };
     document.getElementById("previewPrevBtn").onclick = function(){ setPlaying(false); flipTo(spreadIdx - 1, -1); };
     document.getElementById("previewNextBtn").onclick = function(){ setPlaying(false); flipTo(spreadIdx + 1, 1); };
+    if (allowPrintExport){
+      document.getElementById("previewExportBtn").onclick = exportPdf;
+      document.getElementById("previewPrintBtn").onclick = doPrint;
+    }
     overlay.addEventListener("click", function(e){ if (e.target === overlay) doClose(); });
     document.addEventListener("keydown", keyHandler);
   }
